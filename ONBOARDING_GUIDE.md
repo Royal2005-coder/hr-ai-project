@@ -3,7 +3,7 @@
 **Du an:** HR Analytics -- He thong du bao nghi viec va truy van insight nhan su  
 **Ma so de tai:** 252BIM500601  
 **Repository:** https://gitlab.com/boygia757-netizen/hr-ai-project  
-**Phien ban:** 1.0 | Ngay cap nhat: 11/02/2026
+**Phien ban:** 3.0 | Ngay cap nhat: 11/02/2026
 
 
 ---
@@ -16,7 +16,7 @@
 3. [Yeu cau quyen truy cap](#3-yeu-cau-quyen-truy-cap)
 4. [Cai dat moi truong buoc dau tien](#4-cai-dat-moi-truong-buoc-dau-tien)
 5. [Clone du an tu GitLab](#5-clone-du-an-tu-gitlab)
-6. [Cau hinh Vertex AI Authentication](#6-cau-hinh-vertex-ai-authentication)
+6. [Cau hinh moi truong (.env)](#6-cau-hinh-moi-truong-env)
 7. [Khoi dong he thong](#7-khoi-dong-he-thong)
 8. [Kiem tra he thong hoat dong](#8-kiem-tra-he-thong-hoat-dong)
 9. [Huong dan su dung giao dien Wren AI](#9-huong-dan-su-dung-giao-dien-wren-ai)
@@ -67,8 +67,8 @@ Du an HR Analytics xay dung mot **tro ly ao** cho phep nhan su (HR) hoi dap du l
     ┌─────────┼─────────┐         │
     ▼                   ▼         ▼
 ┌────────┐    ┌──────────┐  ┌──────────────┐
-│Vertex  │    │  Qdrant  │  │  SQL Server  │
-│  AI    │    │Port 6333 │  │  Port 1433   │
+│Gemini  │    │  Qdrant  │  │  SQL Server  │
+│  API   │    │Port 6333 │  │  Port 1433   │
 │(Google)│    │(VectorDB)│  │ (Database)   │
 └────────┘    └──────────┘  └──────────────┘
 ```
@@ -78,7 +78,7 @@ Du an HR Analytics xay dung mot **tro ly ao** cho phep nhan su (HR) hoi dap du l
 | Thanh phan | Vai tro | Cong nghe |
 |---|---|---|
 | **Wren UI** | Giao dien web, noi nguoi dung nhap cau hoi | Next.js, React |
-| **Wren AI Service** | Bo nao AI: chuyen cau hoi → SQL, tao bieu do | Python, LiteLLM, Vertex AI |
+| **Wren AI Service** | Bo nao AI: chuyen cau hoi → SQL, tao bieu do | Python, LiteLLM, Gemini API |
 | **Wren Engine** | Thuc thi SQL, quan ly semantic layer | Java |
 | **Qdrant** | Luu tru vector embeddings cho SQL Pairs/Instructions | Vector Database |
 | **Ibis Server** | Ket noi toi SQL Server database | Python |
@@ -168,16 +168,17 @@ Ban can duoc cap quyen **Developer** tren du an GitLab.
 2. Quan tri vien se moi ban vao du an voi vai tro **Developer**
 3. Ban se nhan email moi tham gia → nhan **Accept** de xac nhan
 
-### 3.2 Vertex AI Authentication (Google Cloud)
+### 3.2 Gemini API Authentication
 
-He thong su dung **Vertex AI** (Google Cloud) de goi LLM va Embedder. Xac thuc bang **Application Default Credentials (ADC)** thay vi API Key.
+He thong su dung **Gemini API** (Google) de goi LLM va Embedder. API key da duoc **nhung san trong file `.env`** va commit len GitLab private repo.
 
 **Yeu cau:**
-1. Co tai khoan Google Cloud voi quyen truy cap project `project-ba49e1b7-26e0-4cbf-a14`
-2. Cai dat **Google Cloud SDK (gcloud CLI)**: https://cloud.google.com/sdk/docs/install
-3. Duoc cap quyen **Vertex AI User** (roles/aiplatform.user) tren project
+- Khong can tai khoan Google Cloud
+- Khong can cai Google Cloud SDK (gcloud)
+- Khong can tao API key rieng
+- Chi can clone du an ve la co san file `.env` voi `GEMINI_API_KEY` da cau hinh
 
-> ⚠️ **CANH BAO BAO MAT:** File `application_default_credentials.json` chua thong tin xac thuc cua ban. TUYET DOI KHONG commit file nay len Git.
+> ✅ **DON GIAN:** Team chi can pull code tu GitLab ve va chay. Moi thu da duoc cau hinh san.
 
 ### 3.3 SQL Server Database
 
@@ -276,100 +277,57 @@ git pull origin hr_domain_research
 ---
 
 
-## 6. Cau hinh Vertex AI Authentication
+## 6. Cau hinh moi truong (.env)
 
-### 6.1 Dang nhap Google Cloud va tao ADC
+### 6.1 File .env da co san
 
-Mo **PowerShell** va chay cac lenh sau:
+Khi ban clone du an tu GitLab, file `.env` da co san trong thu muc `WrenAI/docker/`. File nay chua:
+- `GEMINI_API_KEY` — API key chung cho team, da nhung san
+- `COMPOSE_PROJECT_NAME` — Ten project Docker
+- `USER_UUID` — ID nguoi dung
 
-```powershell
-# Buoc 1: Dang nhap tai khoan Google Cloud
-gcloud auth login
+> ✅ **KHONG CAN** cai Google Cloud SDK (gcloud)
+> ✅ **KHONG CAN** tao API key rieng
+> ✅ **KHONG CAN** chay `gcloud auth login` hay bat ky lenh xac thuc nao
+> ✅ Chi can pull code ve va chay
 
-# Buoc 2: Tao Application Default Credentials (ADC)
-gcloud auth application-default login
-
-# Buoc 3: Dat quota project cho ADC
-gcloud auth application-default set-quota-project project-ba49e1b7-26e0-4cbf-a14
-```
-
-> **Ghi chu:** Trinh duyet se tu dong mo de ban dang nhap tai khoan Google. Sau khi dang nhap thanh cong, credentials se duoc luu tai:
-> - Windows: `%APPDATA%\gcloud\application_default_credentials.json`
-
-### 6.2 Copy ADC vao thu muc Docker
-
-Wren AI Service can doc file ADC tu ben trong container. Copy file credentials vao thu muc du an:
-
-```powershell
-# Dam bao dang o thu muc goc du an
-cd C:\Users\<TenUser>\hr-ai-project
-
-# Copy ADC vao thu muc docker/gcloud/
-Copy-Item "$env:APPDATA\gcloud\application_default_credentials.json" -Destination "WrenAI\docker\gcloud\application_default_credentials.json" -Force
-```
-
-> ⚠️ **CANH BAO BAO MAT:** File `application_default_credentials.json` da duoc them vao `.gitignore`. No se **KHONG BAO GIO** bi commit len Git.
-
-### 6.3 Tao file .env
+### 6.2 Kiem tra file .env ton tai
 
 ```powershell
 # Di chuyen vao thu muc docker
-cd WrenAI\docker
+cd C:\Users\<TenUser>\hr-ai-project\WrenAI\docker
 
-# Tao file .env tu file mau
-Copy-Item .env.example .env
+# Kiem tra file .env ton tai
+Test-Path .env
+# Ket qua mong doi: True
 ```
 
-### 6.4 Chinh sua file .env
-
-Mo file `.env` bang VS Code hoac Notepad:
-
-```powershell
-code .env
-# Hoac:  notepad .env
-```
-
-> **Luu y:** He thong su dung Vertex AI Authentication (ADC), KHONG can GEMINI_API_KEY trong file .env. Neu file .env co dong `GEMINI_API_KEY`, ban co the xoa hoac de trong.
-
-**Tim dong sau va tao UUID:**
-
-```dotenv
-# TIM DONG NAY:
-USER_UUID=
-
-# THAY BANG UUID NGAU NHIEN (chay lenh sau de tao):
-```
-
-Tao UUID bang PowerShell:
-```powershell
-[guid]::NewGuid().ToString()
-# Ket qua vi du: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-```
-
-Dan UUID vao file .env:
-```dotenv
-USER_UUID=a1b2c3d4-e5f6-7890-abcd-ef1234567890
-```
-
-### 6.5 Kiem tra file .env va ADC da dung chua
+### 6.3 Kiem tra noi dung file .env
 
 ```powershell
 # Kiem tra cac bien quan trong trong .env
-Select-String -Path .env -Pattern "USER_UUID|COMPOSE_PROJECT_NAME"
-
-# Kiem tra file ADC ton tai
-Test-Path "gcloud\application_default_credentials.json"
-# Ket qua mong doi: True
+Select-String -Path .env -Pattern "GEMINI_API_KEY|USER_UUID|COMPOSE_PROJECT_NAME"
 ```
 
 **Ket qua mong doi:**
 ```
 .env:1:COMPOSE_PROJECT_NAME=wrenai
-.env:49:USER_UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  (PHAI co gia tri)
-True
+.env:X:GEMINI_API_KEY=AIza...  (PHAI co gia tri)
+.env:X:USER_UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  (PHAI co gia tri)
 ```
 
-> ⚠️ **CANH BAO:** File `.env` va `application_default_credentials.json` da duoc them vao `.gitignore`. Chung se **KHONG BAO GIO** bi commit len Git.
+> Neu `GEMINI_API_KEY` hoac `USER_UUID` trong, lien he quan tri vien du an.
+
+### 6.4 Cau hinh config.yaml (da cau hinh san)
+
+File `WrenAI/docker/config.yaml` da duoc cau hinh san voi cac model:
+
+| Thanh phan | Model | Ghi chu |
+|---|---|---|
+| **LLM** | `gemini/gemini-2.5-flash` | Mo hinh ngon ngu lon |
+| **Embedder** | `gemini/gemini-embedding-001` | Mo hinh embedding |
+
+> Ban **KHONG CAN** chinh sua file `config.yaml` truoc khi da xac nhan truoc voi team. Cau hinh da san sang de chay.
 
 
 ---
@@ -661,7 +619,7 @@ hr-ai-project/
 ├── WrenAI/                             ← Engine chinh cua he thong
 │   └── docker/
 │       ├── .env.example                ← FILE MAU de tao .env
-│       ├── .env                        ← ⚠️ FILE BI MAT (khong commit)
+│       ├── .env                        ← Cau hinh he thong (GEMINI_API_KEY, UUID)
 │       ├── config.yaml                 ← Cau hinh LLM va Embedder
 │       ├── docker-compose.yaml         ← Cau hinh Docker containers
 │       └── data/                       ← Du lieu runtime (khong commit)
@@ -681,10 +639,10 @@ hr-ai-project/
 
 | File | Muc do | Mo ta |
 |---|---|---|
-| `WrenAI/docker/.env` | ⚠️ BI MAT | Chua cau hinh he thong -- KHONG DUOC commit |
+| `WrenAI/docker/.env` | Cau hinh | Chua GEMINI_API_KEY va cau hinh he thong (da commit trong private repo) |
 | `WrenAI/docker/.env.example` | Tham khao | Mau de tao file .env |
 | `WrenAI/docker/docker-compose.yaml` | Cau hinh | Dinh nghia 6 Docker services |
-| `WrenAI/docker/config.yaml` | Cau hinh | Model AI (Vertex AI), Embedder settings |
+| `WrenAI/docker/config.yaml` | Cau hinh | Model AI (Gemini API), Embedder settings |
 | `TAI_LIEU_DU_AN_HR_ANALYTICS.md` | Tai lieu | Mo ta ky thuat chi tiet du an |
 
 
@@ -724,21 +682,18 @@ cd WrenAI\docker
 docker compose up -d
 ```
 
-### 12.3 Loi: AI Service tra ve loi xac thuc ("Permission denied" hoac "ADC not found")
+### 12.3 Loi: AI Service tra ve loi xac thuc ("Permission denied" hoac "API key not valid")
 
-**Nguyen nhan:** Application Default Credentials (ADC) thieu, het han, hoac chua duoc copy vao thu muc Docker.
+**Nguyen nhan:** `GEMINI_API_KEY` trong file `.env` bi thieu, sai, hoac het han.
 
 **Cach xu ly:**
-1. Dang nhap lai va tao ADC moi:
+1. Kiem tra API key trong file .env:
 ```powershell
-gcloud auth login
-gcloud auth application-default login
-gcloud auth application-default set-quota-project project-ba49e1b7-26e0-4cbf-a14
+cd WrenAI\docker
+Select-String -Path .env -Pattern "GEMINI_API_KEY"
+# Dam bao dong GEMINI_API_KEY=AIza... co gia tri hop le
 ```
-2. Copy lai ADC vao thu muc Docker:
-```powershell
-Copy-Item "$env:APPDATA\gcloud\application_default_credentials.json" -Destination "WrenAI\docker\gcloud\application_default_credentials.json" -Force
-```
+2. Neu API key trong hoac sai, lien he quan tri vien du an de cap nhat.
 3. Khoi dong lai:
 ```powershell
 cd WrenAI\docker
@@ -765,18 +720,18 @@ git push origin hr_domain_research
 
 ### 12.5 Loi: Container wren-ai-service restart lien tuc
 
-**Nguyen nhan:** Thieu hoac sai ADC credentials, hoac config.yaml bi loi.
+**Nguyen nhan:** Thieu hoac sai `GEMINI_API_KEY` trong file `.env`, hoac `config.yaml` bi loi.
 
 **Cach xu ly:**
 ```powershell
 # Xem logs chi tiet
 docker logs wrenai-wren-ai-service-1 --tail 50
 
-# Kiem tra file ADC ton tai
-Test-Path "WrenAI\docker\gcloud\application_default_credentials.json"
+# Kiem tra GEMINI_API_KEY co trong .env
+Select-String -Path "WrenAI\docker\.env" -Pattern "GEMINI_API_KEY"
+# Dam bao dong GEMINI_API_KEY=AIza... co gia tri hop le
 
-# Neu thieu, copy lai ADC:
-Copy-Item "$env:APPDATA\gcloud\application_default_credentials.json" -Destination "WrenAI\docker\gcloud\application_default_credentials.json" -Force
+# Neu thieu hoac sai, lien he quan tri vien du an de cap nhat .env
 
 # Khoi dong lai
 cd WrenAI\docker
@@ -806,14 +761,13 @@ git push origin hr_domain_research
 
 ## 13. Quy tac bao mat bat buoc
 
-### 13.1 KHONG BAO GIO commit cac file sau len Git:
+### 13.1 Trang thai cac file nhay cam:
 
-| File | Ly do |
-|---|---|
-| `.env` | Chua cau hinh va mat khau |
-| `application_default_credentials.json` | Chua credential Google Cloud |
-| `service-account*.json` | Chua khoa tai khoan dich vu |
-| File chua mat khau SQL Server | Bao ve truy cap database |
+| File | Trang thai | Ly do |
+|---|---|---|
+| `.env` | ✅ Da commit (private repo) | Chua GEMINI_API_KEY chung cho team. Repo la private, chi thanh vien moi truy cap duoc |
+| `service-account*.json` | ❌ Khong commit | Chua khoa tai khoan dich vu (neu co) |
+| File chua mat khau SQL Server | ❌ Khong commit | Bao ve truy cap database |
 
 ### 13.2 Kiem tra truoc khi commit
 
@@ -821,28 +775,27 @@ git push origin hr_domain_research
 # LUON kiem tra truoc khi commit
 git status
 
-# Dam bao KHONG co file nao ten .env trong danh sach
-# Neu thay .env, DUNG LAI va lien he quan tri vien
+# Dam bao KHONG co file nhay cam nao ngoai du kien trong danh sach
+# Neu thay file la (service-account*.json, mat khau...), DUNG LAI va lien he quan tri vien
 ```
 
-### 13.3 Neu lo commit file bi mat
+### 13.3 Neu lo de lo API key
 
 ```powershell
-# Xoa file khoi Git (giu file tren may)
-git rm --cached WrenAI/docker/.env
-git commit -m "fix: xoa file .env khoi git"
-git push origin hr_domain_research
+# Neu API key bi lo ra ngoai (public repo, chat, email...):
+# 1. Lien he quan tri vien du an NGAY LAP TUC
+# 2. Quan tri vien se tao API key moi va cap nhat file .env
+# 3. Tat ca thanh vien pull code moi nhat de nhan .env cap nhat
 
-# SAU DO: Thu hoi credentials bi lo ngay lap tuc
-# gcloud auth application-default revoke
-# Sau do dang nhap lai va tao ADC moi
+git pull origin hr_domain_research
 ```
 
-### 13.4 Khong chia se credentials
+### 13.4 Bao ve API key
 
-- Moi thanh vien tu dang nhap `gcloud auth application-default login` tren may cua minh
-- Khong gui file `application_default_credentials.json` qua chat, email, hoac bat ky kenh nao
-- Khong commit file credentials vao code hoac tai lieu
+- API key chung da nhung san trong `.env` tren GitLab private repo
+- **KHONG** chia se API key ra ngoai nhom du an (khong post len forum, mang xa hoi, public repo)
+- **KHONG** gui file `.env` qua chat, email cong khai, hoac bat ky kenh khong bao mat nao
+- Neu can thay doi API key, lien he quan tri vien du an
 
 
 ---
@@ -869,6 +822,8 @@ git push origin hr_domain_research
 | Branch chinh (Protected) | `main` |
 | Giao dien web (local) | http://localhost:3000 |
 | AI Service health check | http://localhost:5555/health |
+| LLM Model | `gemini/gemini-2.5-flash` |
+| Embedder Model | `gemini/gemini-embedding-001` |
 | Ma so de tai | 252BIM500601 |
 
 
@@ -886,8 +841,8 @@ Danh dau ✅ khi hoan thanh tung buoc:
 [ ] 4. Da tao Personal Access Token tren GitLab
 [ ] 5. Da clone du an thanh cong
 [ ] 6. Da checkout branch hr_domain_research
-[ ] 7. Da tao file .env tu .env.example
-[ ] 8. Da cau hinh Vertex AI ADC (gcloud auth) va copy credentials vao docker/gcloud/
+[ ] 7. Da kiem tra file .env ton tai (Test-Path .env → True)
+[ ] 8. Da kiem tra GEMINI_API_KEY co gia tri trong .env
 [ ] 9. Da chay docker compose up -d thanh cong
 [ ] 10. Da kiem tra 6 container dang chay (docker ps)
 [ ] 11. Da kiem tra AI Service health (localhost:5555/health → ok)
@@ -902,4 +857,4 @@ Danh dau ✅ khi hoan thanh tung buoc:
 ---
 
 *Tai lieu nay duoc tao boi nhom du an HR Analytics. Moi quyen duoc bao luu.*  
-*Phien ban 1.0 — Ngay 11/02/2026*
+*Phien ban 3.0 — Ngay 11/02/2026*

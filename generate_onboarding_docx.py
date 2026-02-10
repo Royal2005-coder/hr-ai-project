@@ -24,15 +24,14 @@ PROJECT_CODE = "252BIM500601"
 GITLAB_URL = "https://gitlab.com/boygia757-netizen/hr-ai-project"
 BRANCH_WORK = "hr_domain_research"
 BRANCH_MAIN = "main"
-VERSION = "2.0"
+VERSION = "3.0"
 DATE = "11/02/2026"
-GCP_PROJECT = "project-ba49e1b7-26e0-4cbf-a14"
 
 TEAM_MEMBERS = [
-    {"email": "ninhdp23406@st.uel.edu.vn", "gcp_role": "Service Usage Consumer, Vertex AI User"},
-    {"email": "uyenntd23406@st.uel.edu.vn", "gcp_role": "Service Usage Consumer, Vertex AI User"},
-    {"email": "hannpn23406@st.uel.edu.vn", "gcp_role": "Service Usage Consumer, Vertex AI User"},
-    {"email": "khainn23406@st.uel.edu.vn", "gcp_role": "Service Usage Consumer, Vertex AI User"},
+    {"email": "ninhdp23406@st.uel.edu.vn", "role": "AI Engineering"},
+    {"email": "uyenntd23406@st.uel.edu.vn", "role": "Data Pipeline & MLOps"},
+    {"email": "hannpn23406@st.uel.edu.vn", "role": "AI Engineering"},
+    {"email": "khainn23406@st.uel.edu.vn", "role": "AI Engineering (Lead)"},
 ]
 
 
@@ -326,7 +325,7 @@ def create_document():
         "3. Yêu cầu phần cứng và phần mềm",
         "4. Cài đặt môi trường phát triển",
         "5. Clone dự án từ GitLab",
-        "6. Cấu hình Vertex AI Authentication (Google Cloud)",
+        "6. Cấu hình môi trường (.env)",
         "7. Khởi động hệ thống",
         "8. Kiểm tra hệ thống hoạt động",
         "9. Hướng dẫn sử dụng giao diện Wren AI",
@@ -383,7 +382,7 @@ def create_document():
         ["Thành phần", "Port", "Vai trò", "Công nghệ"],
         [
             ["Wren UI", "3000", "Giao diện web, nơi người dùng nhập câu hỏi", "Next.js, React"],
-            ["Wren AI Service", "5555", "Bộ não AI: chuyển câu hỏi → SQL, tạo biểu đồ", "Python, LiteLLM, Gemini"],
+            ["Wren AI Service", "5555", "Bộ não AI: chuyển câu hỏi → SQL, tạo biểu đồ", "Python, LiteLLM, Gemini API"],
             ["Wren Engine", "8080", "Thực thi SQL, quản lý semantic layer", "Java"],
             ["Qdrant", "6333", "Lưu trữ vector embeddings cho SQL Pairs/Instructions", "Vector database"],
             ["Ibis Server", "8000", "Kết nối tới SQL Server database gốc", "Python"],
@@ -394,8 +393,8 @@ def create_document():
 
     doc.add_paragraph(
         "Luồng hoạt động: Người dùng nhập câu hỏi tại Wren UI (port 3000) → Wren AI Service gọi "
-        "Gemini API để chuyển thành SQL → Wren Engine thực thi SQL trên database → kết quả trả về "
-        "hiển thị trên giao diện web kèm biểu đồ."
+        "Google Gemini API để chuyển thành SQL → Wren Engine thực thi SQL trên database → kết quả "
+        "trả về hiển thị trên giao diện web kèm biểu đồ."
     )
 
     doc.add_page_break()
@@ -407,15 +406,16 @@ def create_document():
 
     doc.add_heading("2.1. Thành viên dự án", level=2)
     doc.add_paragraph(
-        "Các thành viên đã được cấp quyền trên cả hai nền tảng GitLab và Google Cloud Platform (GCP):"
+        "Các thành viên đã được cấp quyền Developer trên GitLab. "
+        "API key Gemini đã được nhúng sẵn trong dự án — không cần cấu hình thêm."
     )
 
     member_rows = []
     for i, m in enumerate(TEAM_MEMBERS, 1):
-        member_rows.append([str(i), m["email"], "Developer", m["gcp_role"]])
+        member_rows.append([str(i), m["email"], "Developer", m["role"]])
 
     add_table(doc,
-        ["STT", "Email", "Quyền GitLab", "Quyền GCP (IAM)"],
+        ["STT", "Email", "Quyền GitLab", "Vai trò dự án"],
         member_rows,
         col_widths=[1, 5.5, 3, 5.5]
     )
@@ -429,24 +429,21 @@ def create_document():
     add_error_box(doc, "Không được phép: xóa branch main, xóa repository, thay đổi cài đặt dự án.")
     add_error_box(doc, "Không được phép: xóa code hoặc file của người khác trên branch main.")
 
-    doc.add_heading("2.3. Phân quyền Google Cloud Platform (GCP)", level=2)
+    doc.add_heading("2.3. Gemini API — đã nhúng sẵn trong dự án", level=2)
     doc.add_paragraph(
-        f"Mỗi thành viên đã được cấp hai vai trò trên GCP project {GCP_PROJECT}:"
+        "Hệ thống sử dụng Google Gemini API (qua Google AI Studio) với API key được nhúng sẵn "
+        "trong file .env của dự án. Thành viên chỉ cần pull code về và chạy docker compose up -d "
+        "là hệ thống hoạt động ngay, không cần cấu hình API key riêng."
     )
     add_table(doc,
-        ["Vai trò GCP", "Mục đích"],
+        ["Thành phần AI", "Model", "Mô tả"],
         [
-            ["Service Usage Consumer", "Cho phép gọi các API đã được bật trên project (Vertex AI API)"],
-            ["Vertex AI User", "Cho phép sử dụng Vertex AI services — gọi model Gemini qua Vertex AI"],
+            ["LLM (Large Language Model)", "gemini/gemini-2.5-flash", "Chuyển câu hỏi tiếng Việt → SQL, tạo biểu đồ, phân tích"],
+            ["Embedder", "gemini/gemini-embedding-001", "Tạo vector embeddings cho semantic search (768 dims)"],
         ],
-        col_widths=[5, 11]
+        col_widths=[4, 5, 7]
     )
-    doc.add_paragraph(
-        "Hệ thống sử dụng Vertex AI Authentication — xác thực bằng tài khoản Google Cloud "
-        "thông qua lệnh gcloud auth. KHÔNG sử dụng API key. Mỗi thành viên chỉ cần đăng nhập "
-        "bằng tài khoản @st.uel.edu.vn đã được cấp quyền trên GCP project."
-    )
-    add_warning_box(doc, "KHÔNG tạo Gemini API key. Hệ thống xác thực qua Vertex AI IAM — chỉ cần login bằng gcloud.")
+    add_important_box(doc, "API key dùng chung cho cả team, đã được nhúng trong file .env. Không cần cài Google Cloud SDK hay gcloud.")
 
     doc.add_page_break()
 
@@ -581,75 +578,54 @@ def create_document():
     doc.add_page_break()
 
     # =========================================================================
-    # CHƯƠNG 6: CẤU HÌNH VERTEX AI AUTHENTICATION
+    # CHƯƠNG 6: CẤU HÌNH MÔI TRƯỜNG (.ENV)
     # =========================================================================
-    doc.add_heading("6. Cấu hình Vertex AI Authentication (Google Cloud)", level=1)
+    doc.add_heading("6. Cấu hình môi trường (.env)", level=1)
 
     doc.add_paragraph(
-        "Hệ thống sử dụng Vertex AI Authentication — xác thực bằng tài khoản Google Cloud "
-        "đã được cấp quyền IAM. KHÔNG cần tạo API key."
+        "Hệ thống sử dụng Google Gemini API với API key đã được nhúng sẵn trong file .env. "
+        "Thành viên chỉ cần pull code về là có thể chạy ngay — không cần cài Google Cloud SDK, "
+        "không cần tạo API key riêng, không cần đăng nhập gcloud."
     )
-    add_error_box(doc, "KHÔNG tạo Gemini API key trên Google AI Studio. Việc tạo API key không cần thiết và có thể gây rủi ro bảo mật nếu bị lộ.")
-    add_important_box(doc, "Chỉ cần đăng nhập bằng lệnh gcloud — tài khoản @st.uel.edu.vn đã được cấp quyền Vertex AI User trên GCP project.")
+    add_important_box(doc, "API key dùng chung cho cả team. Dự án là GitLab private repo — chỉ thành viên được mời mới truy cập được.")
 
-    doc.add_heading("6.1. Cài đặt Google Cloud SDK", level=2)
-    add_step(doc, 1, "Tải Google Cloud SDK")
-    add_code_block(doc, "https://cloud.google.com/sdk/docs/install")
-    add_step(doc, 2, "Chạy file cài đặt, làm theo hướng dẫn trên màn hình")
-    add_step(doc, 3, "Mở PowerShell mới và kiểm tra cài đặt thành công")
-    add_code_block(doc, 'gcloud --version\n# Kết quả mong đợi: Google Cloud SDK 5xx.x.x')
+    doc.add_heading("6.1. File .env đã có sẵn trong dự án", level=2)
+    doc.add_paragraph(
+        "Khi pull code từ GitLab, file .env đã được bao gồm sẵn với đầy đủ cấu hình. "
+        "Bạn chỉ cần kiểm tra file tồn tại:"
+    )
+    add_code_block(doc, 'cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker\n\n# Kiểm tra file .env đã có\nTest-Path .env\n# Kết quả mong đợi: True')
 
-    doc.add_heading("6.2. Đăng nhập Google Cloud", level=2)
-    add_step(doc, 1, "Đăng nhập tài khoản Google Cloud")
-    add_code_block(doc, 'gcloud auth login')
-    doc.add_paragraph("Trình duyệt sẽ mở ra — đăng nhập bằng tài khoản @st.uel.edu.vn đã được cấp quyền.")
-
-    add_step(doc, 2, "Đăng nhập Application Default Credentials (ADC) — dùng cho Docker")
-    add_code_block(doc, 'gcloud auth application-default login')
-    doc.add_paragraph("Trình duyệt sẽ mở ra lần nữa — đăng nhập cùng tài khoản. ADC credentials sẽ được lưu tại:")
-    add_code_block(doc, 'C:\\Users\\<TenUser>\\AppData\\Roaming\\gcloud\\application_default_credentials.json')
-
-    add_step(doc, 3, "Đặt quota project cho ADC")
-    add_code_block(doc, f'gcloud auth application-default set-quota-project {GCP_PROJECT}')
-
-    add_step(doc, 4, "Đặt project mặc định")
-    add_code_block(doc, f'gcloud config set project {GCP_PROJECT}')
-
-    doc.add_heading("6.3. Copy ADC credentials cho Docker", level=2)
-    add_step(doc, 1, "Tạo thư mục gcloud trong docker/")
-    add_code_block(doc, 'cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker\\\nNew-Item -ItemType Directory -Path gcloud -Force')
-
-    add_step(doc, 2, "Copy file ADC vào thư mục gcloud")
-    add_code_block(doc, 'Copy-Item "$env:APPDATA\\gcloud\\application_default_credentials.json" .\\gcloud\\')
-    add_important_box(doc, "File này đã được thêm vào .gitignore — sẽ không bị commit lên Git.")
-
-    doc.add_heading("6.4. Tạo file .env", level=2)
-    add_step(doc, 1, "Tạo file .env từ file mẫu")
-    add_code_block(doc, 'cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker\\\nCopy-Item .env.example .env')
-    add_step(doc, 2, "Mở file .env và chỉnh sửa")
-    add_code_block(doc, 'code .env')
-
-    doc.add_paragraph("Chỉnh sửa các giá trị sau trong file .env:")
+    doc.add_heading("6.2. Nội dung quan trọng trong .env", level=2)
+    doc.add_paragraph("File .env chứa các biến cấu hình sau (đã được thiết lập sẵn):")
     add_table(doc,
         ["Biến", "Giá trị", "Mô tả"],
         [
-            ["COMPOSE_PROJECT_NAME", "wrenai", "Tên Docker project (giữ nguyên)"],
-            ["VERTEXAI_PROJECT", GCP_PROJECT, "GCP Project ID đã được cấp quyền"],
-            ["VERTEXAI_LOCATION", "us-central1", "Vùng Vertex AI"],
-            ["GENERATION_MODEL", "vertex_ai/gemini-2.5-flash", "Model AI sử dụng"],
-            ["USER_UUID", "(tạo UUID mới)", "Chạy lệnh bên dưới để tạo"],
+            ["GEMINI_API_KEY", "(đã nhúng sẵn)", "API key Google Gemini — dùng chung cho team"],
+            ["GENERATION_MODEL", "gemini/gemini-2.5-flash", "Model LLM sử dụng"],
+            ["COMPOSE_PROJECT_NAME", "wrenai", "Tên Docker project"],
+            ["SHOULD_FORCE_DEPLOY", "1", "Tự động deploy model khi khởi động"],
+            ["USER_UUID", "(đã có sẵn)", "UUID người dùng — giữ nguyên"],
         ],
         col_widths=[4, 5, 7]
     )
+    add_warning_box(doc, "Không thay đổi GEMINI_API_KEY trong file .env trừ khi được hướng dẫn bởi Lead.")
 
-    doc.add_paragraph("Tạo UUID ngẫu nhiên bằng PowerShell:")
-    add_code_block(doc, '[guid]::NewGuid().ToString()\n# Kết quả ví dụ: a1b2c3d4-e5f6-7890-abcd-ef1234567890\n# Dán giá trị này vào dòng USER_UUID= trong file .env')
+    doc.add_heading("6.3. Cấu hình AI models (config.yaml)", level=2)
+    doc.add_paragraph("File config.yaml cũng đã có sẵn, cấu hình 2 model AI:")
+    add_table(doc,
+        ["Thành phần", "Model", "Vai trò"],
+        [
+            ["LLM", "gemini/gemini-2.5-flash", "Hiểu câu hỏi tiếng Việt, tạo SQL, phân tích kết quả"],
+            ["Embedder", "gemini/gemini-embedding-001", "Tạo vector embeddings cho semantic search (768 dims)"],
+        ],
+        col_widths=[3, 5, 8]
+    )
+    add_important_box(doc, "Không cần chỉnh sửa config.yaml. Mọi cấu hình đã sẵn sàng sau khi pull code.")
 
-    doc.add_heading("6.5. Kiểm tra cấu hình", level=2)
-    add_code_block(doc, '# Kiểm tra file .env\nSelect-String -Path .env -Pattern "VERTEXAI_PROJECT|USER_UUID|COMPOSE_PROJECT_NAME"\n\n# Kiểm tra file ADC đã copy\nTest-Path .\\gcloud\\application_default_credentials.json\n# Kết quả mong đợi: True')
-    doc.add_paragraph("Kết quả mong đợi: 3 dòng với giá trị thực tế và file ADC tồn tại.")
-
-    add_warning_box(doc, "File .env và thư mục gcloud/ đã được thêm vào .gitignore. Chúng sẽ không bao giờ bị commit lên Git.")
+    doc.add_heading("6.4. Kiểm tra cấu hình", level=2)
+    add_code_block(doc, '# Kiểm tra file .env có tồn tại và đầy đủ\nSelect-String -Path .env -Pattern "GEMINI_API_KEY|GENERATION_MODEL|USER_UUID"\n\n# Kiểm tra config.yaml\nTest-Path config.yaml\n# Kết quả mong đợi: True')
+    doc.add_paragraph("Kết quả mong đợi: 3 dòng với giá trị thực tế và config.yaml tồn tại.")
 
     doc.add_page_break()
 
@@ -883,8 +859,8 @@ def create_document():
         '│\n'
         '├── WrenAI/                             ← Engine chính của hệ thống\n'
         '│   └── docker/\n'
-        '│       ├── .env.example                ← File mẫu để tạo .env\n'
-        '│       ├── .env                        ← File bí mật (không commit)\n'
+        '│       ├── .env                        ← Cấu hình + API key (đã commit)\n'
+        '│       ├── .env.example                ← File mẫu tham khảo\n'
         '│       ├── config.yaml                 ← Cấu hình LLM và Embedder\n'
         '│       ├── docker-compose.yaml         ← Cấu hình Docker containers\n'
         '│       └── data/                       ← Dữ liệu runtime (không commit)\n'
@@ -904,10 +880,10 @@ def create_document():
     add_table(doc,
         ["File", "Mức độ", "Mô tả"],
         [
-            ["WrenAI/docker/.env", "⚠ Bí mật", "Chứa API keys — không được commit"],
-            ["WrenAI/docker/.env.example", "Tham khảo", "Mẫu để tạo file .env"],
+            ["WrenAI/docker/.env", "Cấu hình", "Chứa GEMINI_API_KEY — đã commit trong private repo"],
+            ["WrenAI/docker/.env.example", "Tham khảo", "Mẫu file .env với API key nhúng sẵn"],
             ["WrenAI/docker/docker-compose.yaml", "Cấu hình", "Định nghĩa 6 Docker services"],
-            ["WrenAI/docker/config.yaml", "Cấu hình", "Model AI (Vertex AI/Gemini), embedder, pipelines"],
+            ["WrenAI/docker/config.yaml", "Cấu hình", "Model AI (Gemini 2.5 Flash), embedder (Gemini Embedding 001), pipelines"],
             ["TAI_LIEU_DU_AN_HR_ANALYTICS.md", "Tài liệu", "Mô tả kỹ thuật chi tiết dự án"],
         ],
         col_widths=[5.5, 2.5, 7]
@@ -932,9 +908,9 @@ def create_document():
             "fix": '# Tìm ứng dụng đang dùng cổng 3000\nnetstat -ano | findstr :3000\n\n# Kết thúc process đó (thay PID bằng số thực tế)\ntaskkill /PID <PID> /F\n\n# Khởi động lại\ncd WrenAI\\docker\ndocker compose up -d',
         },
         {
-            "title": '12.3. Lỗi: AI Service trả về lỗi xác thực Vertex AI',
-            "cause": "ADC credentials chưa được cấu hình hoặc hết hạn.",
-            "fix": '# Đăng nhập lại ADC\ngcloud auth application-default login\n\n# Đặt lại quota project\ngcloud auth application-default set-quota-project project-ba49e1b7-26e0-4cbf-a14\n\n# Copy lại file ADC\nCopy-Item "$env:APPDATA\\gcloud\\application_default_credentials.json" .\\gcloud\\\n\n# Khởi động lại:\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d',
+            "title": '12.3. Lỗi: AI Service trả về lỗi xác thực API',
+            "cause": "GEMINI_API_KEY trong file .env bị thiếu, sai, hoặc đã hết quota.",
+            "fix": '# Kiểm tra API key trong .env\nSelect-String -Path .env -Pattern "GEMINI_API_KEY"\n# Đảm bảo có giá trị: GEMINI_API_KEY=AIzaSy...\n\n# Khởi động lại:\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d\n\n# Nếu vẫn lỗi, liên hệ Lead để kiểm tra API key',
         },
         {
             "title": '12.4. Lỗi: "git push rejected" khi push lên main',
@@ -943,8 +919,8 @@ def create_document():
         },
         {
             "title": "12.5. Lỗi: container wren-ai-service restart liên tục",
-            "cause": "ADC credentials thiếu/sai, hoặc config.yaml bị lỗi cấu trúc.",
-            "fix": '# Xem logs chi tiết\ndocker logs wrenai-wren-ai-service-1 --tail 50\n\n# Kiểm tra ADC file\nTest-Path WrenAI\\docker\\gcloud\\application_default_credentials.json\n\n# Kiểm tra .env\nSelect-String -Path WrenAI\\docker\\.env -Pattern "VERTEXAI_PROJECT"\n\n# Khởi động lại\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d',
+            "cause": "GEMINI_API_KEY thiếu/sai, hoặc config.yaml bị lỗi cấu trúc.",
+            "fix": '# Xem logs chi tiết\ndocker logs wrenai-wren-ai-service-1 --tail 50\n\n# Kiểm tra .env có GEMINI_API_KEY\nSelect-String -Path WrenAI\\docker\\.env -Pattern "GEMINI_API_KEY"\n\n# Kiểm tra config.yaml tồn tại\nTest-Path WrenAI\\docker\\config.yaml\n\n# Khởi động lại\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d',
         },
         {
             "title": '12.6. Lỗi: "Authentication failed" khi push code',
@@ -975,16 +951,22 @@ def create_document():
     # =========================================================================
     doc.add_heading("13. Quy tắc bảo mật bắt buộc", level=1)
 
-    doc.add_heading("13.1. Không bao giờ commit các file sau lên Git", level=2)
+    doc.add_heading("13.1. Các file nhạy cảm và quy tắc", level=2)
+    doc.add_paragraph(
+        "File .env chứa Gemini API key đã được commit vào GitLab private repo để team "
+        "pull về và chạy ngay. Điều này an toàn vì repo là private — chỉ thành viên được mời "
+        "mới truy cập được."
+    )
     add_table(doc,
-        ["File", "Lý do"],
+        ["File", "Trạng thái", "Lý do"],
         [
-            [".env", "Chứa API key và mật khẩu"],
-            ["application_default_credentials.json", "Chứa credential Google Cloud"],
-            ["service-account*.json", "Chứa khóa tài khoản dịch vụ"],
-            ["File chứa mật khẩu SQL Server", "Bảo vệ truy cập database"],
+            [".env", "Đã commit (private repo)", "Chứa API key dùng chung — nhúng sẵn cho team"],
+            ["config.yaml", "Đã commit", "Cấu hình AI models — nhúng sẵn cho team"],
+            ["gcloud/ folder", "Không commit (.gitignore)", "Credentials cá nhân — không dùng nữa"],
+            ["service-account*.json", "Không commit", "Khóa tài khoản dịch vụ — không cần"],
+            ["File chứa mật khẩu SQL Server", "Không commit", "Bảo vệ truy cập database"],
         ],
-        col_widths=[7, 9]
+        col_widths=[5, 4, 7]
     )
 
     doc.add_heading("13.2. Kiểm tra trước khi commit", level=2)
@@ -992,30 +974,28 @@ def create_document():
         '# Luôn kiểm tra trước khi commit\n'
         'git status\n'
         '\n'
-        '# Đảm bảo không có file nào tên .env trong danh sách\n'
-        '# Nếu thấy .env, dừng lại và liên hệ quản trị viên'
+        '# Đảm bảo không có file credentials cá nhân hoặc file lạ\n'
+        '# Nếu thấy file .json chứa credentials, dừng lại và liên hệ Lead'
     )
 
     doc.add_heading("13.3. Nếu lỡ commit file bí mật", level=2)
     add_code_block(doc,
-        '# Xóa file khỏi Git (giữ file trên máy)\n'
-        'git rm --cached WrenAI/docker/.env\n'
-        'git rm --cached WrenAI/docker/gcloud/application_default_credentials.json\n'
+        '# Xóa file credentials cá nhân khỏi Git (giữ file trên máy)\n'
+        'git rm --cached <tên-file-credentials>\n'
         'git commit -m "fix: xóa file credentials khỏi git"\n'
         'git push origin hr_domain_research\n'
         '\n'
-        '# Sau đó: revoke và tạo lại ADC\n'
-        'gcloud auth application-default revoke\n'
-        'gcloud auth application-default login'
+        '# Nếu lỡ commit API key khác lên public repo:\n'
+        '# Revoke key ngay trên Google AI Studio và tạo key mới'
     )
 
-    doc.add_heading("13.4. Bảo vệ credentials Google Cloud", level=2)
+    doc.add_heading("13.4. Bảo vệ API key", level=2)
     doc.add_paragraph(
-        "File application_default_credentials.json chứa token xác thực Google Cloud cá nhân. "
-        "Không chia sẻ file này, không gửi qua chat/email. Mỗi thành viên tự tạo ADC riêng "
-        "bằng lệnh gcloud auth application-default login."
+        "API key Gemini dùng chung cho team, được quản lý bởi Lead/Maintainer. "
+        "Không chia sẻ API key ra ngoài nhóm dự án, không post lên forum/chat công khai."
     )
-    add_error_box(doc, "KHÔNG tạo Gemini API key. Hệ thống xác thực qua Vertex AI IAM — chỉ cần login bằng gcloud.")
+    add_error_box(doc, "KHÔNG chia sẻ GEMINI_API_KEY ra ngoài nhóm dự án. Repo là private nhưng API key không nên bị lộ ra public.")
+    add_important_box(doc, "Nếu API key bị lộ: báo ngay cho Lead để revoke và tạo key mới trên Google AI Studio.")
 
     doc.add_page_break()
 
@@ -1032,18 +1012,14 @@ def create_document():
         ["4", "Đã tạo Personal Access Token trên GitLab", "☐"],
         ["5", "Đã clone dự án thành công", "☐"],
         ["6", "Đã checkout branch hr_domain_research", "☐"],
-        ["7", "Đã cài Google Cloud SDK và chạy gcloud --version", "☐"],
-        ["8", "Đã chạy gcloud auth login bằng tài khoản @st.uel.edu.vn", "☐"],
-        ["9", "Đã chạy gcloud auth application-default login", "☐"],
-        ["10", "Đã đặt quota project (gcloud auth application-default set-quota-project)", "☐"],
-        ["11", "Đã copy ADC credentials vào thư mục docker/gcloud/", "☐"],
-        ["12", "Đã tạo file .env từ .env.example và điền USER_UUID", "☐"],
-        ["13", "Đã chạy docker compose up -d thành công", "☐"],
-        ["14", "Đã kiểm tra 6 container đang chạy (docker ps)", "☐"],
-        ["15", "Đã kiểm tra AI Service health (localhost:5555/health → ok)", "☐"],
-        ["16", "Đã mở giao diện web tại localhost:3000", "☐"],
-        ["17", "Đã thử đặt 1 câu hỏi và nhận được kết quả", "☐"],
-        ["18", "Đã thử tạo 1 commit và push lên hr_domain_research", "☐"],
+        ["7", "Đã kiểm tra file .env tồn tại (Test-Path .env → True)", "☐"],
+        ["8", "Đã kiểm tra file config.yaml tồn tại", "☐"],
+        ["9", "Đã chạy docker compose up -d thành công", "☐"],
+        ["10", "Đã kiểm tra 6 container đang chạy (docker ps)", "☐"],
+        ["11", "Đã kiểm tra AI Service health (localhost:5555/health → ok)", "☐"],
+        ["12", "Đã mở giao diện web tại localhost:3000", "☐"],
+        ["13", "Đã thử đặt 1 câu hỏi và nhận được kết quả", "☐"],
+        ["14", "Đã thử tạo 1 commit và push lên hr_domain_research", "☐"],
     ]
 
     add_table(doc,
@@ -1052,7 +1028,7 @@ def create_document():
         col_widths=[1.5, 11, 2.5]
     )
 
-    add_important_box(doc, "Nếu hoàn thành tất cả 18 bước trên, bạn đã sẵn sàng làm việc!")
+    add_important_box(doc, "Nếu hoàn thành tất cả 14 bước trên, bạn đã sẵn sàng làm việc! Chỉ cần 3 phần mềm: Docker, Git, trình duyệt web.")
 
     doc.add_page_break()
 
@@ -1207,7 +1183,7 @@ def create_document():
         ["File/Folder", "Người phụ trách", "Nội dung cần nắm"],
         [
             ["WrenAI/docker/docker-compose.yaml", "Hân", "Kiến trúc 6 services, ports, volumes, env vars"],
-            ["WrenAI/docker/config.yaml", "Hân", "Cấu hình LLM (vertex_ai/gemini-2.5-flash), embedder, pipelines"],
+            ["WrenAI/docker/config.yaml", "Hân", "Cấu hình LLM (gemini/gemini-2.5-flash), embedder (gemini-embedding-001), pipelines"],
             ["WrenAI/wren-ai-service/src/pipelines/", "Khải", "Pipeline SQL generation, correction, retrieval"],
             ["WrenAI/wren-ai-service/src/providers/", "Hân", "LLM/Embedder/DocStore providers implementation"],
             ["WrenAI/wren-ai-service/src/globals.py", "Khải", "Service container initialization, pipe components"],
@@ -1436,7 +1412,8 @@ def create_document():
             ["Giao diện web (local)", "http://localhost:3000"],
             ["AI Service health check", "http://localhost:5555/health"],
             ["Mã số đề tài", PROJECT_CODE],
-            ["GCP Project ID", GCP_PROJECT],
+            ["LLM Model", "gemini/gemini-2.5-flash"],
+            ["Embedder Model", "gemini/gemini-embedding-001"],
         ],
         col_widths=[5, 11]
     )
