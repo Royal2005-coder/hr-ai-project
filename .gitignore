@@ -1,0 +1,58 @@
+# Environment files (chua API keys va secrets)
+.env
+*.env.local
+
+# Google Cloud credentials
+application_default_credentials.json
+**/application_default_credentials.json
+*.json.key
+service-account*.json
+
+# Docker volumes va data runtime
+WrenAI/docker/data/
+WrenAI/docker/mdl/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Node.js
+node_modules/
+.next/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Build outputs
+dist/
+build/
+*.bak
+
+# Logs
+*.log
+
+# Generated docs (giu nguon .md, bo file .docx generated)
+*.docx
+
+# Temporary files
+*.tmp
+*.temp
+generate_docx.py
