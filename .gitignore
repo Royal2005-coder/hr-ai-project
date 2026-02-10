@@ -49,10 +49,17 @@ build/
 # Logs
 *.log
 
-# Generated docs (giu nguon .md, bo file .docx generated)
+# Generated docs (giu nguon .md, chi commit DOCX onboarding)
 *.docx
+!ONBOARDING_GUIDE.docx
 
 # Temporary files
 *.tmp
 *.temp
+
+# Script tao DOCX (khong can commit)
 generate_docx.py
+
+# Debug/test scripts tam thoi trong docker/
+WrenAI/docker/*.py
+!WrenAI/docker/bootstrap/
