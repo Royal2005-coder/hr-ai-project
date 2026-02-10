@@ -24,8 +24,9 @@ PROJECT_CODE = "252BIM500601"
 GITLAB_URL = "https://gitlab.com/boygia757-netizen/hr-ai-project"
 BRANCH_WORK = "hr_domain_research"
 BRANCH_MAIN = "main"
-VERSION = "1.0"
+VERSION = "2.0"
 DATE = "11/02/2026"
+GCP_PROJECT = "project-ba49e1b7-26e0-4cbf-a14"
 
 TEAM_MEMBERS = [
     {"email": "ninhdp23406@st.uel.edu.vn", "gcp_role": "Service Usage Consumer, Vertex AI User"},
@@ -325,7 +326,7 @@ def create_document():
         "3. Yêu cầu phần cứng và phần mềm",
         "4. Cài đặt môi trường phát triển",
         "5. Clone dự án từ GitLab",
-        "6. Cấu hình Gemini API key",
+        "6. Cấu hình Vertex AI Authentication (Google Cloud)",
         "7. Khởi động hệ thống",
         "8. Kiểm tra hệ thống hoạt động",
         "9. Hướng dẫn sử dụng giao diện Wren AI",
@@ -334,7 +335,8 @@ def create_document():
         "12. Xử lý lỗi thường gặp",
         "13. Quy tắc bảo mật bắt buộc",
         "14. Bảng kiểm (checklist) onboarding",
-        "15. Liên hệ hỗ trợ",
+        "15. Phân công nhiệm vụ chi tiết theo team",
+        "16. Liên hệ hỗ trợ",
     ]
     for item in toc_items:
         p = doc.add_paragraph(item)
@@ -429,21 +431,22 @@ def create_document():
 
     doc.add_heading("2.3. Phân quyền Google Cloud Platform (GCP)", level=2)
     doc.add_paragraph(
-        "Mỗi thành viên đã được cấp hai vai trò trên GCP project gen-lang-client-0752987555:"
+        f"Mỗi thành viên đã được cấp hai vai trò trên GCP project {GCP_PROJECT}:"
     )
     add_table(doc,
         ["Vai trò GCP", "Mục đích"],
         [
-            ["Service Usage Consumer", "Cho phép gọi các API đã được bật trên project (Gemini API)"],
-            ["Vertex AI User", "Cho phép sử dụng Vertex AI services khi dự án nâng cấp lên Vertex AI trong tương lai"],
+            ["Service Usage Consumer", "Cho phép gọi các API đã được bật trên project (Vertex AI API)"],
+            ["Vertex AI User", "Cho phép sử dụng Vertex AI services — gọi model Gemini qua Vertex AI"],
         ],
         col_widths=[5, 11]
     )
     doc.add_paragraph(
-        "Hiện tại, hệ thống sử dụng Gemini API key (Google AI Studio) để xác thực. "
-        "Quyền GCP đã được cấp sẵn để chuẩn bị cho việc chuyển sang xác thực Vertex AI "
-        "enterprise trong tương lai khi dự án bật billing trên GCP."
+        "Hệ thống sử dụng Vertex AI Authentication — xác thực bằng tài khoản Google Cloud "
+        "thông qua lệnh gcloud auth. KHÔNG sử dụng API key. Mỗi thành viên chỉ cần đăng nhập "
+        "bằng tài khoản @st.uel.edu.vn đã được cấp quyền trên GCP project."
     )
+    add_warning_box(doc, "KHÔNG tạo Gemini API key. Hệ thống xác thực qua Vertex AI IAM — chỉ cần login bằng gcloud.")
 
     doc.add_page_break()
 
@@ -578,35 +581,63 @@ def create_document():
     doc.add_page_break()
 
     # =========================================================================
-    # CHƯƠNG 6: CẤU HÌNH GEMINI API KEY
+    # CHƯƠNG 6: CẤU HÌNH VERTEX AI AUTHENTICATION
     # =========================================================================
-    doc.add_heading("6. Cấu hình Gemini API key", level=1)
+    doc.add_heading("6. Cấu hình Vertex AI Authentication (Google Cloud)", level=1)
 
-    doc.add_heading("6.1. Lấy Gemini API key", level=2)
-    add_step(doc, 1, "Truy cập Google AI Studio")
-    add_code_block(doc, "https://aistudio.google.com/apikey")
-    add_step(doc, 2, "Đăng nhập bằng tài khoản Google (email @st.uel.edu.vn đã được cấp quyền GCP)")
-    add_step(doc, 3, 'Nhấn Create API key → chọn project gen-lang-client-0752987555 hoặc tạo project mới')
-    add_step(doc, 4, "Copy API key (bắt đầu bằng AIzaSy...)")
-    add_warning_box(doc, "API key là mật khẩu truy cập dịch vụ Google AI. Nếu bị lộ, người khác có thể sử dụng hết quota/phí của bạn. Tuyệt đối không commit API key lên Git, không gửi qua chat hay email.")
+    doc.add_paragraph(
+        "Hệ thống sử dụng Vertex AI Authentication — xác thực bằng tài khoản Google Cloud "
+        "đã được cấp quyền IAM. KHÔNG cần tạo API key."
+    )
+    add_error_box(doc, "KHÔNG tạo Gemini API key trên Google AI Studio. Việc tạo API key không cần thiết và có thể gây rủi ro bảo mật nếu bị lộ.")
+    add_important_box(doc, "Chỉ cần đăng nhập bằng lệnh gcloud — tài khoản @st.uel.edu.vn đã được cấp quyền Vertex AI User trên GCP project.")
 
-    doc.add_heading("6.2. Tạo file .env", level=2)
-    add_step(doc, 1, "Di chuyển vào thư mục docker")
-    add_code_block(doc, "cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker")
-    add_step(doc, 2, "Tạo file .env từ file mẫu")
-    add_code_block(doc, "Copy-Item .env.example .env")
-    add_step(doc, 3, "Mở file .env để chỉnh sửa")
-    add_code_block(doc, 'code .env\n# Hoặc: notepad .env')
+    doc.add_heading("6.1. Cài đặt Google Cloud SDK", level=2)
+    add_step(doc, 1, "Tải Google Cloud SDK")
+    add_code_block(doc, "https://cloud.google.com/sdk/docs/install")
+    add_step(doc, 2, "Chạy file cài đặt, làm theo hướng dẫn trên màn hình")
+    add_step(doc, 3, "Mở PowerShell mới và kiểm tra cài đặt thành công")
+    add_code_block(doc, 'gcloud --version\n# Kết quả mong đợi: Google Cloud SDK 5xx.x.x')
 
-    doc.add_heading("6.3. Chỉnh sửa file .env", level=2)
-    doc.add_paragraph("Tìm và thay thế các giá trị sau trong file .env:")
+    doc.add_heading("6.2. Đăng nhập Google Cloud", level=2)
+    add_step(doc, 1, "Đăng nhập tài khoản Google Cloud")
+    add_code_block(doc, 'gcloud auth login')
+    doc.add_paragraph("Trình duyệt sẽ mở ra — đăng nhập bằng tài khoản @st.uel.edu.vn đã được cấp quyền.")
 
+    add_step(doc, 2, "Đăng nhập Application Default Credentials (ADC) — dùng cho Docker")
+    add_code_block(doc, 'gcloud auth application-default login')
+    doc.add_paragraph("Trình duyệt sẽ mở ra lần nữa — đăng nhập cùng tài khoản. ADC credentials sẽ được lưu tại:")
+    add_code_block(doc, 'C:\\Users\\<TenUser>\\AppData\\Roaming\\gcloud\\application_default_credentials.json')
+
+    add_step(doc, 3, "Đặt quota project cho ADC")
+    add_code_block(doc, f'gcloud auth application-default set-quota-project {GCP_PROJECT}')
+
+    add_step(doc, 4, "Đặt project mặc định")
+    add_code_block(doc, f'gcloud config set project {GCP_PROJECT}')
+
+    doc.add_heading("6.3. Copy ADC credentials cho Docker", level=2)
+    add_step(doc, 1, "Tạo thư mục gcloud trong docker/")
+    add_code_block(doc, 'cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker\\\nNew-Item -ItemType Directory -Path gcloud -Force')
+
+    add_step(doc, 2, "Copy file ADC vào thư mục gcloud")
+    add_code_block(doc, 'Copy-Item "$env:APPDATA\\gcloud\\application_default_credentials.json" .\\gcloud\\')
+    add_important_box(doc, "File này đã được thêm vào .gitignore — sẽ không bị commit lên Git.")
+
+    doc.add_heading("6.4. Tạo file .env", level=2)
+    add_step(doc, 1, "Tạo file .env từ file mẫu")
+    add_code_block(doc, 'cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker\\\nCopy-Item .env.example .env')
+    add_step(doc, 2, "Mở file .env và chỉnh sửa")
+    add_code_block(doc, 'code .env')
+
+    doc.add_paragraph("Chỉnh sửa các giá trị sau trong file .env:")
     add_table(doc,
-        ["Biến", "Giá trị cũ (placeholder)", "Thay bằng"],
+        ["Biến", "Giá trị", "Mô tả"],
         [
-            ["GEMINI_API_KEY", "<thay-bang-api-key-cua-ban>", "AIzaSyxxxxxxxxx (key thực tế của bạn)"],
-            ["VERTEXAI_PROJECT", "<thay-bang-gcp-project-id>", "gen-lang-client-0752987555"],
-            ["USER_UUID", "(để trống)", "Chạy lệnh bên dưới để tạo UUID"],
+            ["COMPOSE_PROJECT_NAME", "wrenai", "Tên Docker project (giữ nguyên)"],
+            ["VERTEXAI_PROJECT", GCP_PROJECT, "GCP Project ID đã được cấp quyền"],
+            ["VERTEXAI_LOCATION", "us-central1", "Vùng Vertex AI"],
+            ["GENERATION_MODEL", "vertex_ai/gemini-2.5-flash", "Model AI sử dụng"],
+            ["USER_UUID", "(tạo UUID mới)", "Chạy lệnh bên dưới để tạo"],
         ],
         col_widths=[4, 5, 7]
     )
@@ -614,11 +645,11 @@ def create_document():
     doc.add_paragraph("Tạo UUID ngẫu nhiên bằng PowerShell:")
     add_code_block(doc, '[guid]::NewGuid().ToString()\n# Kết quả ví dụ: a1b2c3d4-e5f6-7890-abcd-ef1234567890\n# Dán giá trị này vào dòng USER_UUID= trong file .env')
 
-    doc.add_heading("6.4. Kiểm tra file .env", level=2)
-    add_code_block(doc, 'Select-String -Path .env -Pattern "GEMINI_API_KEY|USER_UUID|COMPOSE_PROJECT_NAME"')
-    doc.add_paragraph("Kết quả mong đợi phải có đủ 3 dòng với giá trị thực tế (không phải placeholder).")
+    doc.add_heading("6.5. Kiểm tra cấu hình", level=2)
+    add_code_block(doc, '# Kiểm tra file .env\nSelect-String -Path .env -Pattern "VERTEXAI_PROJECT|USER_UUID|COMPOSE_PROJECT_NAME"\n\n# Kiểm tra file ADC đã copy\nTest-Path .\\gcloud\\application_default_credentials.json\n# Kết quả mong đợi: True')
+    doc.add_paragraph("Kết quả mong đợi: 3 dòng với giá trị thực tế và file ADC tồn tại.")
 
-    add_warning_box(doc, "File .env đã được thêm vào .gitignore. Nó sẽ không bao giờ bị commit lên Git. Đây là cơ chế bảo vệ API key của bạn.")
+    add_warning_box(doc, "File .env và thư mục gcloud/ đã được thêm vào .gitignore. Chúng sẽ không bao giờ bị commit lên Git.")
 
     doc.add_page_break()
 
@@ -876,7 +907,7 @@ def create_document():
             ["WrenAI/docker/.env", "⚠ Bí mật", "Chứa API keys — không được commit"],
             ["WrenAI/docker/.env.example", "Tham khảo", "Mẫu để tạo file .env"],
             ["WrenAI/docker/docker-compose.yaml", "Cấu hình", "Định nghĩa 6 Docker services"],
-            ["WrenAI/docker/config.yaml", "Cấu hình", "Model AI (Gemini), embedder settings"],
+            ["WrenAI/docker/config.yaml", "Cấu hình", "Model AI (Vertex AI/Gemini), embedder, pipelines"],
             ["TAI_LIEU_DU_AN_HR_ANALYTICS.md", "Tài liệu", "Mô tả kỹ thuật chi tiết dự án"],
         ],
         col_widths=[5.5, 2.5, 7]
@@ -901,9 +932,9 @@ def create_document():
             "fix": '# Tìm ứng dụng đang dùng cổng 3000\nnetstat -ano | findstr :3000\n\n# Kết thúc process đó (thay PID bằng số thực tế)\ntaskkill /PID <PID> /F\n\n# Khởi động lại\ncd WrenAI\\docker\ndocker compose up -d',
         },
         {
-            "title": '12.3. Lỗi: AI Service trả về "API key not valid"',
-            "cause": "Gemini API key sai hoặc hết hạn.",
-            "fix": '# Kiểm tra file .env\nSelect-String -Path .env -Pattern "GEMINI_API_KEY"\n\n# Nếu sai, tạo key mới tại: https://aistudio.google.com/apikey\n# Cập nhật vào file .env\n# Khởi động lại:\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d',
+            "title": '12.3. Lỗi: AI Service trả về lỗi xác thực Vertex AI',
+            "cause": "ADC credentials chưa được cấu hình hoặc hết hạn.",
+            "fix": '# Đăng nhập lại ADC\ngcloud auth application-default login\n\n# Đặt lại quota project\ngcloud auth application-default set-quota-project project-ba49e1b7-26e0-4cbf-a14\n\n# Copy lại file ADC\nCopy-Item "$env:APPDATA\\gcloud\\application_default_credentials.json" .\\gcloud\\\n\n# Khởi động lại:\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d',
         },
         {
             "title": '12.4. Lỗi: "git push rejected" khi push lên main',
@@ -912,8 +943,8 @@ def create_document():
         },
         {
             "title": "12.5. Lỗi: container wren-ai-service restart liên tục",
-            "cause": "Thiếu hoặc sai API key, hoặc config.yaml bị lỗi.",
-            "fix": '# Xem logs chi tiết\ndocker logs wrenai-wren-ai-service-1 --tail 50\n\n# Kiểm tra .env\nSelect-String -Path WrenAI\\docker\\.env -Pattern "GEMINI_API_KEY"\n\n# Khởi động lại\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d',
+            "cause": "ADC credentials thiếu/sai, hoặc config.yaml bị lỗi cấu trúc.",
+            "fix": '# Xem logs chi tiết\ndocker logs wrenai-wren-ai-service-1 --tail 50\n\n# Kiểm tra ADC file\nTest-Path WrenAI\\docker\\gcloud\\application_default_credentials.json\n\n# Kiểm tra .env\nSelect-String -Path WrenAI\\docker\\.env -Pattern "VERTEXAI_PROJECT"\n\n# Khởi động lại\ncd WrenAI\\docker\ndocker compose down\ndocker compose up -d',
         },
         {
             "title": '12.6. Lỗi: "Authentication failed" khi push code',
@@ -969,18 +1000,22 @@ def create_document():
     add_code_block(doc,
         '# Xóa file khỏi Git (giữ file trên máy)\n'
         'git rm --cached WrenAI/docker/.env\n'
-        'git commit -m "fix: xóa file .env khỏi git"\n'
+        'git rm --cached WrenAI/docker/gcloud/application_default_credentials.json\n'
+        'git commit -m "fix: xóa file credentials khỏi git"\n'
         'git push origin hr_domain_research\n'
         '\n'
-        '# Sau đó: đổi ngay API key vì nó đã bị lộ\n'
-        '# Tạo key mới tại https://aistudio.google.com/apikey'
+        '# Sau đó: revoke và tạo lại ADC\n'
+        'gcloud auth application-default revoke\n'
+        'gcloud auth application-default login'
     )
 
-    doc.add_heading("13.4. Không chia sẻ API key", level=2)
+    doc.add_heading("13.4. Bảo vệ credentials Google Cloud", level=2)
     doc.add_paragraph(
-        "Mỗi thành viên tự tạo API key riêng của mình. Không gửi API key qua chat, email, "
-        "hoặc bất kỳ kênh nào. Không dán API key vào code hoặc tài liệu."
+        "File application_default_credentials.json chứa token xác thực Google Cloud cá nhân. "
+        "Không chia sẻ file này, không gửi qua chat/email. Mỗi thành viên tự tạo ADC riêng "
+        "bằng lệnh gcloud auth application-default login."
     )
+    add_error_box(doc, "KHÔNG tạo Gemini API key. Hệ thống xác thực qua Vertex AI IAM — chỉ cần login bằng gcloud.")
 
     doc.add_page_break()
 
@@ -997,14 +1032,18 @@ def create_document():
         ["4", "Đã tạo Personal Access Token trên GitLab", "☐"],
         ["5", "Đã clone dự án thành công", "☐"],
         ["6", "Đã checkout branch hr_domain_research", "☐"],
-        ["7", "Đã tạo file .env từ .env.example", "☐"],
-        ["8", "Đã điền GEMINI_API_KEY và USER_UUID vào .env", "☐"],
-        ["9", "Đã chạy docker compose up -d thành công", "☐"],
-        ["10", "Đã kiểm tra 6 container đang chạy (docker ps)", "☐"],
-        ["11", "Đã kiểm tra AI Service health (localhost:5555/health → ok)", "☐"],
-        ["12", "Đã mở giao diện web tại localhost:3000", "☐"],
-        ["13", "Đã thử đặt 1 câu hỏi và nhận được kết quả", "☐"],
-        ["14", "Đã thử tạo 1 commit và push lên hr_domain_research", "☐"],
+        ["7", "Đã cài Google Cloud SDK và chạy gcloud --version", "☐"],
+        ["8", "Đã chạy gcloud auth login bằng tài khoản @st.uel.edu.vn", "☐"],
+        ["9", "Đã chạy gcloud auth application-default login", "☐"],
+        ["10", "Đã đặt quota project (gcloud auth application-default set-quota-project)", "☐"],
+        ["11", "Đã copy ADC credentials vào thư mục docker/gcloud/", "☐"],
+        ["12", "Đã tạo file .env từ .env.example và điền USER_UUID", "☐"],
+        ["13", "Đã chạy docker compose up -d thành công", "☐"],
+        ["14", "Đã kiểm tra 6 container đang chạy (docker ps)", "☐"],
+        ["15", "Đã kiểm tra AI Service health (localhost:5555/health → ok)", "☐"],
+        ["16", "Đã mở giao diện web tại localhost:3000", "☐"],
+        ["17", "Đã thử đặt 1 câu hỏi và nhận được kết quả", "☐"],
+        ["18", "Đã thử tạo 1 commit và push lên hr_domain_research", "☐"],
     ]
 
     add_table(doc,
@@ -1013,16 +1052,371 @@ def create_document():
         col_widths=[1.5, 11, 2.5]
     )
 
-    add_important_box(doc, "Nếu hoàn thành tất cả 14 bước trên, bạn đã sẵn sàng làm việc!")
+    add_important_box(doc, "Nếu hoàn thành tất cả 18 bước trên, bạn đã sẵn sàng làm việc!")
 
     doc.add_page_break()
 
     # =========================================================================
-    # CHƯƠNG 15: LIÊN HỆ HỖ TRỢ
+    # CHƯƠNG 15: PHÂN CÔNG NHIỆM VỤ CHI TIẾT THEO TEAM
     # =========================================================================
-    doc.add_heading("15. Liên hệ hỗ trợ", level=1)
+    doc.add_heading("15. Phân công nhiệm vụ chi tiết theo team", level=1)
+    doc.add_paragraph(
+        "Dự án được chia thành 3 nhóm công việc chính, mỗi nhóm có nhiệm vụ cụ thể "
+        "cho buổi Showcase vấn đáp dự án tuần 10/2 – 16/2/2026. "
+        "Mỗi thành viên cần hoàn thành đầy đủ phần Research + Deep Dive + Output deliverables."
+    )
 
-    doc.add_heading("15.1. Khi gặp vấn đề", level=2)
+    # --- Bảng tổng quan phân công ---
+    doc.add_heading("15.1. Bảng tổng quan phân công", level=2)
+    add_table(doc,
+        ["Field", "Người phụ trách", "Công việc chính", "Deadline"],
+        [
+            ["AI Engineering", "Khải (Lead), Hân, Ninh", "Build Semantic Layer + Deep Dive Wren AI", "16/02/2026"],
+            ["Data Analytics", "Gia", "Analyze Business Insights + Notebook Deep Dive", "16/02/2026"],
+            ["Data Pipeline & MLOps", "Uyên", "ETL flow + Auto-MLOps Workflow Deep Dive", "16/02/2026"],
+        ],
+        col_widths=[3.5, 4, 6, 2.5]
+    )
+
+    doc.add_page_break()
+
+    # =========================================================================
+    # 15.2 AI ENGINEERING — KHẢI, HÂN, NINH
+    # =========================================================================
+    doc.add_heading("15.2. AI Engineering — Khải (Lead), Hân, Ninh", level=2)
+
+    doc.add_heading("I. CÔNG VIỆC CHÍNH", level=3)
+
+    doc.add_paragraph("Công việc 1: Chạy lại toàn bộ hệ thống")
+    p = doc.add_paragraph()
+    run = p.add_run(
+        "Mỗi thành viên tự cài đặt và chạy toàn bộ hệ thống trên máy cá nhân theo hướng dẫn "
+        "Chương 1–8 của tài liệu này. Đảm bảo 6 Docker containers hoạt động, AI Service health "
+        "trả về status: ok, giao diện web tại localhost:3000 hoạt động."
+    )
+    run.font.size = Pt(10)
+
+    doc.add_paragraph("Công việc 2: Mỗi thành viên tạo 5 nghiệp vụ HR mới")
+    p = doc.add_paragraph()
+    run = p.add_run(
+        "Mỗi người tạo 5 business rules mới trên giao diện Wren AI (localhost:3000). "
+        "Mỗi nghiệp vụ phải bao gồm đầy đủ 4 thành phần:"
+    )
+    run.font.size = Pt(10)
+
+    add_table(doc,
+        ["Thành phần", "Mô tả", "Nơi cấu hình trên Wren AI"],
+        [
+            ["Relations", "Thiết lập quan hệ giữa các bảng (JOIN conditions)", "Trang Modeling → chọn bảng → Add Relationship"],
+            ["Modelling", "Thêm calculated fields, measures, dimensions vào semantic layer", "Trang Modeling → chọn bảng → thêm cột"],
+            ["SQL Pairs", "Cặp câu hỏi tiếng Việt – SQL mẫu để AI học theo", "Trang Knowledge → SQL Pairs → Add"],
+            ["Instructions", "Quy tắc nghiệp vụ bằng text (ví dụ: điều kiện lọc, format kết quả)", "Trang Knowledge → Instructions → Add"],
+        ],
+        col_widths=[2.5, 6, 7]
+    )
+
+    doc.add_paragraph("Yêu cầu cho mỗi nghiệp vụ:")
+    items = [
+        "Phải test trên Wren AI: đặt câu hỏi tiếng Việt → hệ thống trả SQL đúng → kết quả chính xác",
+        "Chụp screenshot kết quả chạy thành công làm minh chứng",
+        "Ghi lại: tên nghiệp vụ, mô tả, SQL mẫu, câu hỏi test, kết quả",
+    ]
+    for item in items:
+        p = doc.add_paragraph(f"• {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_paragraph("")
+    doc.add_paragraph("Phân chia 5 nghiệp vụ gợi ý theo từng người:")
+    add_table(doc,
+        ["Thành viên", "5 nghiệp vụ HR gợi ý", "Ghi chú"],
+        [
+            ["Khải (Lead)", "1. Phân tích overtime theo phòng ban và level\\n2. So sánh lương trung bình theo Education Field\\n3. Top nhân viên có years at company cao nhất theo department\\n4. Tỷ lệ nhân viên có work-life balance thấp theo job role\\n5. Phân tích mối quan hệ giữa training times và performance rating", "Lead review toàn bộ nghiệp vụ của Hân và Ninh"],
+            ["Hân", "1. Nhân viên có distance from home > 20km theo department\\n2. Tỷ lệ attrition theo marital status và gender\\n3. Phân tích monthly income theo job level và years in current role\\n4. Nhân viên có stock option level = 0 và risk cao\\n5. So sánh job satisfaction giữa overtime và non-overtime", "Cần verify với Khải trước khi submit"],
+            ["Ninh", "1. Top 10 nhân viên có percent salary hike thấp nhất\\n2. Phân tích relationship satisfaction theo age group\\n3. Tỷ lệ attrition theo number of companies worked\\n4. Nhân viên có total working years > 20 và performance rating thấp\\n5. So sánh environment satisfaction giữa các department", "Cần verify với Khải trước khi submit"],
+        ],
+        col_widths=[2.5, 10, 3.5]
+    )
+
+    doc.add_paragraph("Công việc 3: Tài liệu Deep Dive kỹ thuật")
+    p = doc.add_paragraph()
+    run = p.add_run(
+        "Chuẩn bị trả lời các câu hỏi Deep Dive về source code và kiến trúc Wren AI. "
+        "Phân chia nghiên cứu theo từng người:"
+    )
+    run.font.size = Pt(10)
+
+    doc.add_heading("Phân chia Deep Dive — Khải (Lead):", level=3)
+    deep_dive_khai = [
+        "Kiến trúc tổng thể Wren AI: 6 services, luồng dữ liệu từ câu hỏi → SQL → kết quả",
+        "Tại sao chọn Wren AI thay vì LangChain làm nòng cốt? (so sánh: semantic layer vs prompt engineering)",
+        "Semantic Layer giải quyết bài toán gì cho Text-to-SQL? Tại sao cần metadata thay vì gửi trực tiếp schema?",
+        "Folder source code chính: wren-ai-service/src/pipelines/ — giải thích từng pipeline: sql_generation, sql_correction, intent_classification",
+        "Review và tổng hợp toàn bộ Deep Dive output của Hân và Ninh",
+    ]
+    for i, item in enumerate(deep_dive_khai, 1):
+        p = doc.add_paragraph(f"{i}. {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("Phân chia Deep Dive — Hân:", level=3)
+    deep_dive_han = [
+        "Cơ chế bảo mật: làm sao bảo mật thông tin nhân viên khi query qua LLM? (Semantic Layer che giấu schema thật)",
+        "Docker Compose architecture: 6 services giao tiếp thế nào? Network, ports, volumes",
+        "Config.yaml: ý nghĩa từng section (llm, embedder, document_store, pipeline, settings)",
+        "Qdrant vector database: vai trò lưu trữ embeddings cho SQL Pairs và Instructions",
+        "File wren-ai-service/src/providers/ — phân tích LLM provider (LiteLLM), Embedder provider, Document Store provider",
+    ]
+    for i, item in enumerate(deep_dive_han, 1):
+        p = doc.add_paragraph(f"{i}. {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("Phân chia Deep Dive — Ninh:", level=3)
+    deep_dive_ninh = [
+        "Luồng kết nối SQL Server: Wren Engine → Ibis Server → SQL Server. Giải thích API endpoint và connection flow",
+        "Wren UI (Next.js frontend): cấu trúc src/, API routes, GraphQL schema",
+        "Wren MDL (Model Definition Language): schema JSON, cách định nghĩa models/relationships/metrics",
+        "Context cần cung cấp cho AI để hiểu nghiệp vụ HR: Instructions, SQL Pairs, table descriptions — cơ chế RAG",
+        "File wren-ai-service/src/pipelines/retrieval/ — cơ chế retrieval: db_schema_retrieval, sql_pairs_retrieval, instructions_retrieval",
+    ]
+    for i, item in enumerate(deep_dive_ninh, 1):
+        p = doc.add_paragraph(f"{i}. {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("II. THROUGH BACK — Câu hỏi vấn đáp cần chuẩn bị", level=3)
+    doc.add_paragraph("Toàn bộ team AI Engineering cần chuẩn bị trả lời các câu hỏi sau:")
+    throughback_questions = [
+        "Tại sao chọn Wren AI thay vì LangChain nòng cốt? So sánh ưu/nhược điểm?",
+        "Làm sao để bảo mật thông tin nhân viên khi query qua LLM?",
+        "Semantic Layer trong Wren AI hoạt động thế nào? Giải quyết bài toán gì?",
+        "Các tính năng chính là gì, sắp xếp trong folder nào, chạy class nào để call?",
+        "Làm sao kết nối tới SQL Server qua gì (API)? Viết truy vấn và đảm bảo đúng để thực thi SQL?",
+        "Context nào cần cung cấp cho AI để nó hiểu quy trình nghiệp vụ HR mới thêm vào?",
+        "Repo chạy với file cấu hình metadata đúng chuẩn như thế nào?",
+        "Demo live: đặt câu hỏi tiếng Việt → AI trả SQL → kết quả đúng với nghiệp vụ mới tạo",
+    ]
+    for i, q in enumerate(throughback_questions, 1):
+        p = doc.add_paragraph(f"{i}. {q}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("III. SOURCE CODE CẦN NGHIÊN CỨU", level=3)
+    add_table(doc,
+        ["File/Folder", "Người phụ trách", "Nội dung cần nắm"],
+        [
+            ["WrenAI/docker/docker-compose.yaml", "Hân", "Kiến trúc 6 services, ports, volumes, env vars"],
+            ["WrenAI/docker/config.yaml", "Hân", "Cấu hình LLM (vertex_ai/gemini-2.5-flash), embedder, pipelines"],
+            ["WrenAI/wren-ai-service/src/pipelines/", "Khải", "Pipeline SQL generation, correction, retrieval"],
+            ["WrenAI/wren-ai-service/src/providers/", "Hân", "LLM/Embedder/DocStore providers implementation"],
+            ["WrenAI/wren-ai-service/src/globals.py", "Khải", "Service container initialization, pipe components"],
+            ["WrenAI/wren-ai-service/src/__main__.py", "Khải", "Application entrypoint, lifespan, FastAPI setup"],
+            ["WrenAI/wren-ui/src/", "Ninh", "Next.js frontend: pages, components, API routes"],
+            ["WrenAI/wren-mdl/mdl.schema.json", "Ninh", "MDL schema: models, relationships, metrics definition"],
+            ["WrenAI/wren-engine/", "Ninh", "Query engine: SQL execution, connection management"],
+            ["legacy/init-db.sql", "Cả team", "Database schema gốc: bảng, cột, dữ liệu mẫu"],
+            ["legacy/create_actionable_views.sql", "Cả team", "Views phân tích: risk level, burnout, retention metrics"],
+        ],
+        col_widths=[5.5, 2.5, 8]
+    )
+
+    doc.add_heading("IV. OUTPUT DELIVERABLES", level=3)
+    add_table(doc,
+        ["Output", "Người phụ trách", "Chi tiết"],
+        [
+            ["15 nghiệp vụ HR mới (5/người)", "Khải, Hân, Ninh", "Mỗi nghiệp vụ: relation + modelling + SQL pair + instruction"],
+            ["Demo live Wren AI", "Cả team", "Chạy 5 câu hỏi nghiệp vụ mới → AI trả SQL đúng + kết quả"],
+            ["Tài liệu Deep Dive kỹ thuật", "Khải tổng hợp", "Trả lời 8 câu hỏi Through Back + phân tích source code"],
+            ["Screenshot minh chứng", "Mỗi người", "Chụp kết quả chạy nghiệp vụ mới trên Wren AI"],
+        ],
+        col_widths=[4.5, 3, 8.5]
+    )
+
+    doc.add_page_break()
+
+    # =========================================================================
+    # 15.3 DATA ANALYTICS — GIA
+    # =========================================================================
+    doc.add_heading("15.3. Data Analytics — Gia", level=2)
+
+    doc.add_heading("I. CÔNG VIỆC CHÍNH", level=3)
+
+    doc.add_paragraph("Công việc 1: Trực quan hóa và giải thích Model")
+    items_gia_1 = [
+        "Trực quan hóa kết quả 'tr_attrition_result': feature importance chart, confusion matrix",
+        "Giải thích mô hình Random Forest: cách hoạt động, hyperparameters, cross-validation",
+        "Phân tích: Department nào có Risk cao nhất? Tại sao? (dùng dữ liệu thực từ dataset)",
+        "Giải thích Top 3 Feature drivers thực tế từ dữ liệu (OverTime, MonthlyIncome, Age...)",
+    ]
+    for i, item in enumerate(items_gia_1, 1):
+        p = doc.add_paragraph(f"{i}. {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_paragraph("Công việc 2: Giải thích từng cell trong Notebook")
+    items_gia_2 = [
+        "Đọc và giải thích chi tiết từng cell trong file notebooks/HR_Analytics_Project_Final.ipynb",
+        "Bổ sung markdown giải thích cho các cell code chưa có annotation",
+        "Đảm bảo notebook chạy end-to-end không lỗi",
+    ]
+    for i, item in enumerate(items_gia_2, 1):
+        p = doc.add_paragraph(f"{i}. {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("II. CÂU HỎI DEEP DIVE CẦN CHUẨN BỊ", level=3)
+    deep_dive_gia = [
+        "Insight từ model giúp gì cho HR Director ra quyết định?",
+        "Chi phí thay thế 1 nhân sự là bao nhiêu? (trích dẫn báo cáo số liệu đáng tin cậy)",
+        "Data Leakage là gì? Tại sao tách Train/Test bình thường lại sai trong bài toán này?",
+        "OOF (Out-of-Fold) giúp mô phỏng Production như thế nào?",
+        "Chỉ số Recall quan trọng hơn Precision không? Tại sao? (trong bài toán dự báo nghỉ việc)",
+        "Cách đọc confusion matrix: True Positive, False Negative nghĩa là gì trong ngữ cảnh HR?",
+        "Feature importance: OverTime tại sao là yếu tố số 1? Dữ liệu chứng minh như thế nào?",
+    ]
+    for i, q in enumerate(deep_dive_gia, 1):
+        p = doc.add_paragraph(f"{i}. {q}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("III. SOURCE CODE CẦN NGHIÊN CỨU", level=3)
+    add_table(doc,
+        ["File", "Nội dung cần nắm"],
+        [
+            ["notebooks/HR_Analytics_Project_Final.ipynb", "Toàn bộ EDA, feature engineering, model training, evaluation"],
+            ["notebooks/WA_Fn-UseC_-HR-Employee-Attrition.csv", "Dataset gốc IBM HR: 1470 records, 35 features"],
+            ["legacy/init-db.sql", "Schema database, view 'tr_attrition_result' và 'vw_attrition_analysis'"],
+            ["legacy/create_actionable_views.sql", "Views phân tích: risk scoring, burnout detection"],
+        ],
+        col_widths=[7, 9]
+    )
+
+    doc.add_heading("IV. OUTPUT DELIVERABLES", level=3)
+    add_table(doc,
+        ["Output", "Chi tiết"],
+        [
+            ["DOCX Report Deep Dive", "Trả lời 7 câu hỏi Deep Dive + biểu đồ minh họa + số liệu trích dẫn"],
+            ["Notebook hoàn chỉnh", "Giải thích từng cell, chạy end-to-end, output rõ ràng"],
+            ["Slide/tài liệu trình bày", "Feature importance chart, confusion matrix, department risk analysis"],
+        ],
+        col_widths=[5, 11]
+    )
+
+    doc.add_page_break()
+
+    # =========================================================================
+    # 15.4 DATA PIPELINE & MLOPS — UYÊN
+    # =========================================================================
+    doc.add_heading("15.4. Data Pipeline & MLOps — Uyên", level=2)
+
+    doc.add_heading("I. CÔNG VIỆC CHÍNH", level=3)
+
+    doc.add_paragraph("Công việc 1: Làm rõ luồng ETL Data và MLOps")
+    items_uyen_1 = [
+        "Vẽ sơ đồ luồng ETL: Data Source → Validation → Processing → Model → Output → Notification",
+        "Giải thích Quy Trình Vận Hành Tự Động (Auto-MLOps Workflow) trong Production",
+        "Mô tả chi tiết 5 bước của Scheduled Workflow: Trigger → Validation → Retraining → Logging → Notification",
+        "So sánh: Notebook thí nghiệm (PoC) vs Hệ thống AI vận hành (Production)",
+    ]
+    for i, item in enumerate(items_uyen_1, 1):
+        p = doc.add_paragraph(f"{i}. {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_paragraph("Công việc 2: Tìm hiểu Production Tools")
+    items_uyen_2 = [
+        "Apache Airflow: cách quản lý luồng dữ liệu phức tạp (DAGs)",
+        "SQL Server Agent Job: cách đồng bộ hóa với Database, scheduled jobs",
+        "Local LLM (gpt-oss-max): tại sao dùng local LLM cho bảo mật dữ liệu PII",
+    ]
+    for i, item in enumerate(items_uyen_2, 1):
+        p = doc.add_paragraph(f"{i}. {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("II. CÂU HỎI DEEP DIVE CẦN CHUẨN BỊ", level=3)
+    deep_dive_uyen = [
+        "Trigger logic: Tại sao chạy theo tháng? Độ trễ dữ liệu là gì?",
+        "Data Validation: Cách hệ thống chống lại 'Dữ liệu rác' (Garbage in, Garbage out)?",
+        "Model Drift: Tại sao mô hình có thể yếu đi theo thời gian? Khi nào cần Retrain?",
+        "Monitoring: Giám sát phân phối dữ liệu để phát hiện bất thường như thế nào?",
+        "Human-in-the-loop: Vai trò thực sự của AI Agent trong việc hỗ trợ HR Director ra quyết định?",
+        "Tại sao dùng Local LLM? (Bảo mật PII, ISO/GDPR, dữ liệu không rời Server nội bộ)",
+        "Giá trị của Email Insight & HTML Report: AI đóng vai trò Analyst chuyên nghiệp như thế nào?",
+        "So sánh Apache Airflow vs SQL Server Agent Job vs Prefect cho use case này?",
+    ]
+    for i, q in enumerate(deep_dive_uyen, 1):
+        p = doc.add_paragraph(f"{i}. {q}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    doc.add_heading("III. SOURCE CODE CẦN NGHIÊN CỨU", level=3)
+    add_table(doc,
+        ["File", "Nội dung cần nắm"],
+        [
+            ["notebooks/HR_Analytics_Project_Final.ipynb", "Luồng data pipeline trong notebook: load → EDA → train → predict → export"],
+            ["legacy/setup_db_mail_template.sql", "Cấu hình email alert template cho DB Mail"],
+            ["legacy/init-db.sql", "Schema database, stored procedures, data import flow"],
+            ["legacy/create_actionable_views.sql", "Views tạo Actionable Insights cho HR report"],
+            ["TAI_LIEU_DU_AN_HR_ANALYTICS.md", "Tài liệu kỹ thuật tổng quan dự án — phần MLOps workflow"],
+        ],
+        col_widths=[7, 9]
+    )
+
+    doc.add_heading("IV. OUTPUT DELIVERABLES", level=3)
+    add_table(doc,
+        ["Output", "Chi tiết"],
+        [
+            ["Sơ đồ luồng ETL", "Flowchart/diagram: Data Source → Processing → Model → Output → Alert"],
+            ["DOCX Report Deep Dive", "Trả lời 8 câu hỏi Deep Dive + so sánh tools + sơ đồ minh họa"],
+            ["Slide/tài liệu trình bày", "Tổng quan Data Pipeline, MLOps workflow, Production deployment"],
+        ],
+        col_widths=[5, 11]
+    )
+
+    doc.add_page_break()
+
+    # =========================================================================
+    # 15.5 TIMELINE VÀ QUY TRÌNH BÁO CÁO
+    # =========================================================================
+    doc.add_heading("15.5. Timeline và quy trình báo cáo", level=2)
+
+    add_table(doc,
+        ["Ngày", "Milestone", "Ai làm gì"],
+        [
+            ["10-11/02", "Setup & Onboarding", "Tất cả: clone repo, cài đặt môi trường, chạy hệ thống"],
+            ["11-12/02", "Nghiên cứu source code", "Mỗi người đọc file được phân công trong mục III"],
+            ["12-13/02", "Tạo nghiệp vụ HR (AI Eng)", "Khải/Hân/Ninh: mỗi người tạo 5 nghiệp vụ trên Wren AI"],
+            ["13-14/02", "Deep Dive research", "Tất cả: nghiên cứu câu hỏi Deep Dive, viết tài liệu"],
+            ["14-15/02", "Viết report & chuẩn bị demo", "Gia/Uyên: DOCX report. AI Eng: chuẩn bị demo live"],
+            ["15-16/02", "Review & rehearsal", "Khải review toàn bộ, team chạy thử showcase"],
+        ],
+        col_widths=[2.5, 4, 9.5]
+    )
+
+    doc.add_heading("Quy trình báo cáo tiến độ:", level=3)
+    report_items = [
+        "Mỗi ngày 21:00: mỗi người push commit lên branch hr_domain_research với những gì đã làm",
+        "Khải (Lead) tổng hợp tiến độ hàng ngày và báo cáo cho Maintainer",
+        "Nếu gặp blocker: tạo Issue trên GitLab ngay lập tức, tag @khainn23406",
+        "Trước buổi Showcase: Khải review toàn bộ output, chạy thử demo trước 1 ngày",
+    ]
+    for item in report_items:
+        p = doc.add_paragraph(f"• {item}")
+        p.paragraph_format.left_indent = Cm(1)
+        p.runs[0].font.size = Pt(10)
+
+    add_warning_box(doc, "Tất cả output phải được commit và push lên branch hr_domain_research trước deadline 16/02/2026.")
+
+    doc.add_page_break()
+
+    # =========================================================================
+    # CHƯƠNG 16: LIÊN HỆ HỖ TRỢ
+    # =========================================================================
+    doc.add_heading("16. Liên hệ hỗ trợ", level=1)
+
+    doc.add_heading("16.1. Khi gặp vấn đề", level=2)
     doc.add_paragraph(
         "1. Đọc lại tài liệu này — chương 12 (xử lý lỗi thường gặp).\n"
         "2. Đọc tài liệu kỹ thuật — file TAI_LIEU_DU_AN_HR_ANALYTICS.md.\n"
@@ -1032,7 +1426,7 @@ def create_document():
     )
     add_code_block(doc, f"{GITLAB_URL}/-/issues/new")
 
-    doc.add_heading("15.2. Thông tin dự án", level=2)
+    doc.add_heading("16.2. Thông tin dự án", level=2)
     add_table(doc,
         ["Hạng mục", "Chi tiết"],
         [
@@ -1042,7 +1436,7 @@ def create_document():
             ["Giao diện web (local)", "http://localhost:3000"],
             ["AI Service health check", "http://localhost:5555/health"],
             ["Mã số đề tài", PROJECT_CODE],
-            ["GCP Project ID", "gen-lang-client-0752987555"],
+            ["GCP Project ID", GCP_PROJECT],
         ],
         col_widths=[5, 11]
     )

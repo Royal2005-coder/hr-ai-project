@@ -28,7 +28,7 @@ wren-ai-service/demo/.env
 wren-ai-service/tools/dev/etc/**
 .deepeval-cache.json
 .deepeval_telemtry.txt
-docker/config.yaml
+# docker/config.yaml — tracked for team onboarding (Vertex AI config)
 docker/docker-compose-local.yaml
 docker/data
 
@@ -83,6 +83,7 @@ yarn-error.log*
 ## local env files
 .env*.local
 .env*
+!docker/.env.example
 .env.ai
 
 ## vercel

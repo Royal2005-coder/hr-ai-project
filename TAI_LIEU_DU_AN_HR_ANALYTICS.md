@@ -12,7 +12,7 @@ Phien ban: 1.0 -- Ngay cap nhat: 09/02/2026
 4. Co so du lieu HR Analytics -- Schema va ERD
 5. Cau hinh Wren AI cho bai toan HR Analytics
 6. Semantic Layer -- co che hoat dong cot loi
-7. Cau hinh LLM va Embedder (Gemini)
+7. Cau hinh LLM va Embedder (Vertex AI)
 8. SQL Pairs va Instructions -- tri thuc nghiep vu
 9. Pipeline xu ly truy van Text-to-SQL
 10. Chart Generation -- truc quan hoa du lieu
@@ -47,14 +47,14 @@ Data Layer: Ket noi truc tiep toi co so du lieu MSSQL Server (container hr-sql-s
 
 Semantic Layer: La lop truu tuong hoa du lieu, dinh nghia cac model, relationship, calculated field va mo ta nghiep vu (description) cho tung bang, tung cot. Semantic Layer duoc luu tru trong Wren Engine duoi dang MDL (Model Definition Language) va duoc index vao Qdrant Vector Database de phuc vu retrieval.
 
-Agentic Layer: Wren AI Service (Python, Haystack framework) xu ly toan bo logic AI gom intent classification, schema retrieval, SQL generation, SQL correction, chart generation. Moi chuc nang duoc to chuc thanh mot pipeline rieng biet. LLM (Gemini 2.5 Flash) va Embedder (Gemini Embedding 001) duoc goi qua LiteLLM.
+Agentic Layer: Wren AI Service (Python, Haystack framework) xu ly toan bo logic AI gom intent classification, schema retrieval, SQL generation, SQL correction, chart generation. Moi chuc nang duoc to chuc thanh mot pipeline rieng biet. LLM (Gemini 2.5 Flash) va Embedder (text-embedding-005) duoc goi qua LiteLLM voi xac thuc Vertex AI.
 
 Representation Layer: Wren UI (Next.js) la giao dien web cho nguoi dung, cung cap trang hoi dap (Home), quan ly Modeling, va hien thi ket qua gom bang du lieu, giai thich van ban, va bieu do Vega-Lite.
 
 So do cac container va cong giao tiep:
 
 ```
-wren-ui (port 3000)  <-->  wren-ai-service (port 5555)  <-->  Gemini API
+wren-ui (port 3000)  <-->  wren-ai-service (port 5555)  <-->  Vertex AI
       |                           |
       v                           v
 wren-engine (port 8080)      qdrant (port 6333)
@@ -110,8 +110,8 @@ hr-ai-project/
     |   |   |       |-- sql_pairs_retrieval.py     Tim SQL Pairs tuong tu
     |   |   |       |-- sql_executor.py            Thuc thi SQL tren engine
     |   |   |-- providers/
-    |   |   |   |-- llm/litellm.py       Wrapper goi Gemini LLM qua LiteLLM
-    |   |   |   |-- embedder/litellm.py  Wrapper goi Gemini Embedder
+    |   |   |   |-- llm/litellm.py       Wrapper goi LLM qua LiteLLM (Vertex AI)
+    |   |   |   |-- embedder/litellm.py  Wrapper goi Embedder qua LiteLLM (Vertex AI)
     |   |   |   |-- engine/wren.py       Ket noi Wren Engine va Ibis
     |   |   |   |-- document_store/qdrant.py  Ket noi Qdrant vector DB
     |   |   |-- web/v1/                  FastAPI routes va services
@@ -210,8 +210,9 @@ Container MSSQL Server (hr-sql-server) duoc trien khai rieng, khong nam trong do
 ### 5.2. Bien moi truong (.env)
 
 ```
-GEMINI_API_KEY=<Gemini API key>
-GENERATION_MODEL=gemini/gemini-2.5-flash
+GCP_PROJECT_ID=project-ba49e1b7-26e0-4cbf-a14
+GCP_LOCATION=us-central1
+GENERATION_MODEL=vertex_ai/gemini-2.5-flash
 WREN_PRODUCT_VERSION=0.29.1
 WREN_AI_SERVICE_VERSION=0.29.0
 WREN_UI_VERSION=0.32.2
@@ -222,15 +223,17 @@ SHOULD_FORCE_DEPLOY=1
 TELEMETRY_ENABLED=false
 ```
 
+> **Luu y:** He thong su dung Vertex AI Authentication (Application Default Credentials) thay vi API Key. File ADC duoc mount vao container tu thu muc `docker/gcloud/`.
+
 SHOULD_FORCE_DEPLOY=1 dam bao moi lan khoi dong, he thong tu dong deploy lai MDL va re-index toan bo documents vao Qdrant.
 
 ### 5.3. Cau hinh AI Service (config.yaml)
 
 File config.yaml la trung tam cau hinh cua wren-ai-service, dinh nghia 4 thanh phan chinh:
 
-LLM: Su dung Gemini 2.5 Flash qua LiteLLM voi context window 1,048,576 tokens, max output 8192 tokens, temperature 0 (deterministic). Provider la litellm_llm, cho phep chuyen doi giua cac LLM khac nhau ma khong thay doi code.
+LLM: Su dung Gemini 2.5 Flash qua LiteLLM voi provider Vertex AI (vertex_ai/gemini-2.5-flash), context window 1,048,576 tokens, max output 8192 tokens, temperature 0 (deterministic). Xac thuc qua Application Default Credentials (ADC), khong can API key.
 
-Embedder: Su dung gemini-embedding-001 voi output 768 chieu. Truoc do su dung text-embedding-004 nhung da bi deprecated tren Gemini API v1beta. Tham so quan trong la dimensions (so nhieu, khong phai dimension so it) vi LiteLLM truyen truc tiep tham so nay toi Gemini API.
+Embedder: Su dung vertex_ai/text-embedding-005 voi output 768 chieu. Xac thuc cung qua Vertex AI ADC. Tham so quan trong la dimensions (so nhieu, khong phai dimension so it) vi LiteLLM truyen truc tiep tham so nay toi API.
 
 Document Store: Qdrant tai dia chi http://qdrant:6333, embedding_model_dim: 768 (phai khop voi output cua embedder), recreate_index: true (tao lai index moi khi deploy).
 
@@ -272,25 +275,27 @@ Khi nguoi dung deploy, Semantic Layer duoc xuat thanh van ban (MDL string), sau 
 Phuong phap nay giam thieu hallucination vi LLM chi "thay" cac bang va cot thuc su lien quan, kem theo mo ta nghiep vu ro rang.
 
 
-## 7. Cau hinh LLM va Embedder (Gemini)
+## 7. Cau hinh LLM va Embedder (Vertex AI)
 
-### 7.1. LLM -- Gemini 2.5 Flash
+### 7.1. LLM -- Gemini 2.5 Flash (via Vertex AI)
 
-Model: gemini/gemini-2.5-flash (qua LiteLLM).
+Model: vertex_ai/gemini-2.5-flash (qua LiteLLM).
 Context window: 1,048,576 tokens -- du lon de chua toan bo schema, instructions, SQL pairs, va lich su hoi dap.
 Temperature: 0 -- dam bao ket qua SQL on dinh, khong ngau nhien.
 Max tokens: 8192 -- du cho cac truy van SQL phuc tap nhieu buoc.
 
-LiteLLM dong vai tro abstraction layer, cho phep chuyen doi giua cac provider (OpenAI, Gemini, Anthropic, ...) chi bang thay doi config ma khong can sua code. Trong file wren-ai-service/src/providers/llm/litellm.py, lop LitellmLLMProvider nhan cau hinh tu config.yaml va tao ra generator function tuong ung.
+Xac thuc bang Vertex AI IAM thong qua Application Default Credentials (ADC). File credentials duoc mount vao container tu thu muc `docker/gcloud/application_default_credentials.json`. Khong can API key.
 
-### 7.2. Embedder -- Gemini Embedding 001
+LiteLLM dong vai tro abstraction layer, cho phep chuyen doi giua cac provider (OpenAI, Vertex AI, Anthropic, ...) chi bang thay doi config ma khong can sua code. Trong file wren-ai-service/src/providers/llm/litellm.py, lop LitellmLLMProvider nhan cau hinh tu config.yaml va tao ra generator function tuong ung.
 
-Model: gemini/gemini-embedding-001.
+### 7.2. Embedder -- Text Embedding 005 (via Vertex AI)
+
+Model: vertex_ai/text-embedding-005.
 Output: 768 chieu (dimensions).
 
-Luu y ky thuat quan trong: LiteLLM truyen tham so embedding qua litellm.aembedding(model=..., dimensions=...). Ten tham so la "dimensions" (so nhieu), khong phai "dimension" (so it). Neu cau hinh sai ten, Gemini API tra ve loi "Unknown name 'dimension'". Day la van de da duoc xu ly trong qua trinh cau hinh.
+Luu y ky thuat quan trong: LiteLLM truyen tham so embedding qua litellm.aembedding(model=..., dimensions=...). Ten tham so la "dimensions" (so nhieu), khong phai "dimension" (so it). Neu cau hinh sai ten, API tra ve loi "Unknown name 'dimension'". Day la van de da duoc xu ly trong qua trinh cau hinh.
 
-Model text-embedding-004 truoc do duoc su dung nhung da bi Google deprecated tren Gemini API v1beta. Chi con gemini-embedding-001 la kha dung, duoc xac nhan bang viec goi ListModels API.
+Xac thuc cung thong qua Vertex AI ADC, giong nhu LLM. Khong can API key rieng cho embedder.
 
 Trong file wren-ai-service/src/providers/embedder/litellm.py, lop LitellmEmbedderProvider truyen tat ca kwargs tu config truc tiep vao litellm.aembedding(), do do ten truong trong config.yaml phai chinh xac theo API cua LiteLLM.
 
@@ -449,12 +454,12 @@ Luong 2 -- Data (khong gui toi LLM): Du lieu thuc (ten nhan vien, luong, diem da
 4. Ket qua du lieu tra ve truc tiep cho UI.
 5. LLM chi nhan duoc ket qua tong hop (neu can giai thich) voi gioi han so dong (mac dinh 500 dong).
 
-Nhu vay, LLM khong bao gio truc tiep truy cap database va du lieu nhan vien cu the chi di theo duong MSSQL -> Ibis Server -> Wren Engine -> UI, khong qua API cua Google/Gemini.
+Nhu vay, LLM khong bao gio truc tiep truy cap database va du lieu nhan vien cu the chi di theo duong MSSQL -> Ibis Server -> Wren Engine -> UI, khong qua API cua Google/Vertex AI.
 
 ### 12.3. Bien phap bo sung
 
 - Telemetry disabled: TELEMETRY_ENABLED=false trong .env, khong gui bat ky du lieu nao ra ngoai.
-- API key bao ve: Gemini API key chi duoc luu trong .env va truyen vao container qua environment variable, khong hardcode trong code.
+- Vertex AI IAM authentication: Xac thuc qua Application Default Credentials (ADC), duoc mount vao container tu thu muc `docker/gcloud/`. Khong su dung API key, giam rui ro bi lo key.
 - Docker network isolation: Tat ca container giao tiep qua mang noi bo Docker (network: wren), chi expose port 3000 (UI) ra host.
 
 
@@ -495,14 +500,14 @@ LangChain van phu hop cho cac du an prototype nho, hoac khi can tuy chinh sau lo
 
 - Docker Desktop (Windows/Mac) hoac Docker Engine (Linux).
 - RAM toi thieu 8 GB (khuyen nghi 16 GB).
-- Gemini API key (mien phi tu Google AI Studio).
+- Vertex AI Authentication: Application Default Credentials (ADC) qua `gcloud auth application-default login`, voi quyen truy cap project `project-ba49e1b7-26e0-4cbf-a14`.
 - MSSQL Server voi co so du lieu HR_Analytics da duoc khoi tao.
 
 ### 14.2. Cac buoc khoi dong
 
 Buoc 1: Chuan bi MSSQL Server. Trien khai container hr-sql-server voi co so du lieu HR_Analytics. Chay cac script SQL trong thu muc legacy/ de tao bang va nap du lieu. Chay notebook HR_Analytics_Project_Final.ipynb de huan luyen mo hinh va ghi ket qua du bao vao bang tr_attrition_result.
 
-Buoc 2: Cau hinh Wren AI. Vao thu muc hr-ai-project/WrenAI/docker/. Chinh sua file .env: dat GEMINI_API_KEY, kiem tra cac version. Chinh sua file config.yaml: dam bao embedder dung model gemini/gemini-embedding-001, dimensions: 768.
+Buoc 2: Cau hinh Wren AI. Vao thu muc hr-ai-project/WrenAI/docker/. Chinh sua file .env: kiem tra cac version, khong can GEMINI_API_KEY. Cau hinh Vertex AI ADC: chay `gcloud auth application-default login` va copy file credentials vao `docker/gcloud/`. Chinh sua file config.yaml: dam bao LLM dung model vertex_ai/gemini-2.5-flash, embedder dung model vertex_ai/text-embedding-005, dimensions: 768.
 
 Buoc 3: Khoi dong he thong.
 ```
@@ -548,9 +553,9 @@ Cau hoi chay mau chat xam: "Nhan vien tai nang nao co nguy co nghi viec? Chay ma
 
 ### 15.2. Cac van de da xu ly trong qua trinh cau hinh
 
-Embedder error "Unknown name 'dimension'": Do config.yaml su dung "dimension" (so it) thay vi "dimensions" (so nhieu). LiteLLM truyen truc tiep tham so nay toi Gemini API nen ten phai chinh xac.
+Embedder error "Unknown name 'dimension'": Do config.yaml su dung "dimension" (so it) thay vi "dimensions" (so nhieu). LiteLLM truyen truc tiep tham so nay toi Vertex AI API nen ten phai chinh xac.
 
-Model text-embedding-004 deprecated: Chuyen sang gemini-embedding-001, xac nhan bang ListModels API.
+Model text-embedding-004 deprecated: Chuyen sang vertex_ai/text-embedding-005 voi xac thuc Vertex AI IAM.
 
 View tra ve NULL: Do bang HR_Predictions trong (0 dong). Da sua cac view de su dung tr_attrition_result (2940 dong co du lieu thuc).
 
