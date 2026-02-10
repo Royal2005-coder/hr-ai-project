@@ -1,5 +1,8 @@
-.env
+# .env duoc track vi du an private - API key nhung san cho team
+# Chi .env.example va .env duoc track, gcloud/ van bi ignore
+!.env
 !.env.example
 data/
 *.pyc
 __pycache__/
+gcloud/

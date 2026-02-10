@@ -3,7 +3,7 @@ provider: litellm_llm
 timeout: 120
 models:
   - alias: default
-    model: vertex_ai/gemini-2.5-flash
+    model: gemini/gemini-2.5-flash
     context_window_size: 1048576
     kwargs:
       max_tokens: 8192
@@ -16,7 +16,7 @@ provider: litellm_embedder
 timeout: 120
 models:
   - alias: default
-    model: vertex_ai/text-embedding-005
+    model: gemini/gemini-embedding-001
     dimensions: 768
 
 ---
@@ -35,7 +35,7 @@ provider: qdrant
 location: http://qdrant:6333
 embedding_model_dim: 768
 timeout: 120
-recreate_index: true
+recreate_index: false
 
 ---
 type: pipeline
@@ -138,7 +138,7 @@ settings:
   doc_endpoint: https://docs.getwren.ai
   is_oss: true
   engine_timeout: 30
-  column_indexing_batch_size: 50
+  column_indexing_batch_size: 10
   table_retrieval_size: 10
   table_column_retrieval_size: 100
   allow_intent_classification: true

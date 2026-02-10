@@ -59,15 +59,12 @@ services:
     environment:
       PYTHONUNBUFFERED: 1
       CONFIG_PATH: /app/config.yaml
-      VERTEXAI_PROJECT: ${VERTEXAI_PROJECT}
-      VERTEXAI_LOCATION: ${VERTEXAI_LOCATION}
-      GOOGLE_APPLICATION_CREDENTIALS: /app/gcloud/application_default_credentials.json
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     env_file:
       - ${PROJECT_DIR}/.env
     volumes:
       - ${PROJECT_DIR}/config.yaml:/app/config.yaml:ro
       - ${PROJECT_DIR}/data:/app/data:ro
-      - ${PROJECT_DIR}/gcloud/application_default_credentials.json:/app/gcloud/application_default_credentials.json:ro
     networks:
       - wren
     extra_hosts:
