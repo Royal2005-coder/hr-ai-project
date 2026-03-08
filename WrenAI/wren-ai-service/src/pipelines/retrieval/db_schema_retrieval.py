@@ -121,6 +121,7 @@ def _build_view_ddl(content: dict) -> str:
 
 
 ## Start of Pipeline
+# === BƯỚC 1 RETRIEVAL: Embedding câu hỏi người dùng thành vector để tìm kiếm trong Vector DB ===
 @observe(capture_input=False, capture_output=False)
 async def embedding(query: str, embedder: Any, histories: list[AskHistory]) -> dict:
     if query:
@@ -136,6 +137,7 @@ async def embedding(query: str, embedder: Any, histories: list[AskHistory]) -> d
         return {}
 
 
+# === BƯỚC 2 RETRIEVAL: Tìm kiếm các bảng ứng viên (TABLE_DESCRIPTION) tương đồng nhất với câu hỏi ===
 @observe(capture_input=False)
 async def table_retrieval(
     embedding: dict, project_id: str, tables: list[str], table_retriever: Any
@@ -449,6 +451,7 @@ RETRIEVAL_MODEL_KWARGS = {
 }
 
 
+# === PIPELINE TRUY XUẤT DB SCHEMA - Orchestrate: Embedding query → Tìm bảng → Lấy schema → Tỉa cột → Trả về DDL context ===
 class DbSchemaRetrieval(BasicPipeline):
     def __init__(
         self,

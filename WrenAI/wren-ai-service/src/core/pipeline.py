@@ -11,6 +11,7 @@ from src.core.engine import Engine
 from src.core.provider import DocumentStoreProvider, EmbedderProvider, LLMProvider
 
 
+# === LỚP CƠ SỞ PIPELINE - Định nghĩa abstract cho tất cả pipeline trong hệ thống RAG ===
 class BasicPipeline(metaclass=ABCMeta):
     def __init__(self, pipe: Pipeline | AsyncDriver | Driver):
         self._pipe = pipe
@@ -20,6 +21,7 @@ class BasicPipeline(metaclass=ABCMeta):
         ...
 
 
+# === THÀNH PHẦN PIPELINE - Chứa tất cả provider (LLM, Embedder, DocumentStore, Engine) cần thiết cho 1 pipeline ===
 @dataclass
 class PipelineComponent(Mapping):
     llm_provider: LLMProvider = None

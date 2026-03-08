@@ -19,6 +19,7 @@ from src.providers.loader import provider
 from src.utils import extract_braces_content, remove_trailing_slash
 
 
+# === NHÀ CUNG CẤP LLM LITELLM - Implement LLMProvider, giao tiếp với OpenAI/Gemini/Anthropic qua litellm.acompletion() ===
 @provider("litellm_llm")
 class LitellmLLMProvider(LLMProvider):
     def __init__(

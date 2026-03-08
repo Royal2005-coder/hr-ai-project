@@ -26,6 +26,7 @@ from src.pipelines.indexing.utils import helper
 logger = logging.getLogger("wren-ai-service")
 
 
+# === BỘ CHIA NHỎ DDL (CHUNKER) - Cắt schema cơ sở dữ liệu (bảng, cột, quan hệ) thành các Document chunks nhỏ để embedding ===
 @component
 class DDLChunker:
     @component.output_types(documents=List[Document])
@@ -336,6 +337,7 @@ async def write(clean: Dict[str, Any], writer: DocumentWriter) -> None:
 ## End of Pipeline
 
 
+# === PIPELINE INDEXING DB SCHEMA - Orchestrate toàn bộ luồng: Validate MDL → Chunk DDL → Embedding → Lưu vào Vector DB ===
 class DBSchema(BasicPipeline):
     def __init__(
         self,

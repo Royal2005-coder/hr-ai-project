@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from haystack.document_stores.types import DocumentStore
 
 
+# === NHÀ CUNG CẤP LLM - Abstract class định nghĩa giao diện giao tiếp với mô hình ngôn ngữ lớn (OpenAI, Gemini, v.v.) ===
 class LLMProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_generator(self, *args, **kwargs):
@@ -18,6 +19,7 @@ class LLMProvider(metaclass=ABCMeta):
         return self._context_window_size
 
 
+# === NHÀ CUNG CẤP EMBEDDER - Abstract class để chuyển đổi văn bản thành vector số học (embedding) ===
 class EmbedderProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_text_embedder(self, *args, **kwargs):
@@ -31,6 +33,7 @@ class EmbedderProvider(metaclass=ABCMeta):
         return self._embedding_model
 
 
+# === NHÀ CUNG CẤP KHO TÀI LIỆU - Abstract class quản lý lưu trữ và truy xuất vector trong Qdrant DB ===
 class DocumentStoreProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_store(self, *args, **kwargs) -> DocumentStore:

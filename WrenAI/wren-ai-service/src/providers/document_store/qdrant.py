@@ -63,6 +63,7 @@ def convert_haystack_documents_to_qdrant_points(
     return points
 
 
+# === KHO TÀI LIỆU QDRANT BẤT ĐỒNG BỘ - Mở rộng QdrantDocumentStore với async client để lưu/truy xuất vector hiệu năng cao ===
 class AsyncQdrantDocumentStore(QdrantDocumentStore):
     def __init__(
         self,
@@ -162,6 +163,7 @@ class AsyncQdrantDocumentStore(QdrantDocumentStore):
             collection_name=index, field_name="project_id", field_schema="keyword"
         )
 
+    # === TÌM KIẾM VECTOR (COSINE SIMILARITY) - Truy vấn Qdrant DB để tìm các document tương đồng nhất với vector đầu vào ===
     async def _query_by_embedding(
         self,
         query_embedding: List[float],
@@ -320,6 +322,7 @@ class AsyncQdrantDocumentStore(QdrantDocumentStore):
         return len(document_objects)
 
 
+# === BỘ TRUY XUẤT EMBEDDING BẤT ĐỒNG BỘ - Component Haystack gọi _query_by_embedding() để thực hiện vector search ===
 class AsyncQdrantEmbeddingRetriever(QdrantEmbeddingRetriever):
     def __init__(
         self,
@@ -364,6 +367,7 @@ class AsyncQdrantEmbeddingRetriever(QdrantEmbeddingRetriever):
         return {"documents": docs}
 
 
+# === NHÀ CUNG CẤP QDRANT - Khởi tạo và quản lý tất cả collection Vector DB (db_schema, table_descriptions, sql_pairs, instructions, v.v.) ===
 @provider("qdrant")
 class QdrantProvider(DocumentStoreProvider):
     def __init__(
@@ -391,6 +395,7 @@ class QdrantProvider(DocumentStoreProvider):
         self._embedding_model_dim = embedding_model_dim
         self._reset_document_store(recreate_index)
 
+    # === KHỞI TẠO TẤT CẢ COLLECTION - Tạo các kho vector riêng biệt cho từng loại dữ liệu tri thức (Knowledge Base) ===
     def _reset_document_store(self, recreate_index: bool):
         self.get_store(recreate_index=recreate_index)
         self.get_store(dataset_name="table_descriptions", recreate_index=recreate_index)

@@ -26,6 +26,7 @@ class Instruction(BaseModel):
     scope: Literal["sql", "answer", "chart"] = "sql"
 
 
+# === BỘ CHUYỂN ĐỔI INSTRUCTIONS - Chuyển hướng dẫn nghiệp vụ thành Document, chunking theo từng instruction riêng lẻ ===
 @component
 class InstructionsConverter:
     @component.output_types(documents=List[Document])
@@ -124,6 +125,7 @@ async def write(
 ## End of Pipeline
 
 
+# === PIPELINE INDEXING INSTRUCTIONS - Luồng lưu trữ hướng dẫn nghiệp vụ bổ sung vào Vector DB để cải thiện chất lượng ===
 class Instructions(BasicPipeline):
     def __init__(
         self,

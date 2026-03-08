@@ -94,6 +94,7 @@ class AskResultResponse(_AskResultResponse):
     ] = Field(None, exclude=True)
 
 
+# === DỊCH VỤ XỬ LÝ CÂU HỎI - Orchestrate toàn bộ luồng: Phân loại ý định → Truy xuất → Suy luận → Sinh SQL → Sửa lỗi ===
 class AskService:
     def __init__(
         self,

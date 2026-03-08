@@ -30,6 +30,7 @@ def _prepare_texts_to_embed(documents: List[Document]) -> List[str]:
     return texts_to_embed
 
 
+# === BỘ NHÚNG VĂN BẢN - Chuyển câu hỏi người dùng (text đơn) thành vector để thực hiện tìm kiếm tương đồng ===
 @component
 class AsyncTextEmbedder:
     def __init__(
@@ -76,6 +77,7 @@ class AsyncTextEmbedder:
         return {"embedding": response.data[0]["embedding"], "meta": meta}
 
 
+# === BỘ NHÚNG TÀI LIỆU - Chuyển hàng loạt Document (schema, DDL chunks) thành vector để lưu vào Vector DB ===
 @component
 class AsyncDocumentEmbedder:
     def __init__(
@@ -162,6 +164,7 @@ class AsyncDocumentEmbedder:
         return {"documents": documents, "meta": meta}
 
 
+# === NHÀ CUNG CẤP LITELLM EMBEDDER - Implement EmbedderProvider, hỗ trợ nhiều model embedding qua litellm ===
 @provider("litellm_embedder")
 class LitellmEmbedderProvider(EmbedderProvider):
     def __init__(

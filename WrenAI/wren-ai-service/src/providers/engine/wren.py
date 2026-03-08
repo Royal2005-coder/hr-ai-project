@@ -14,6 +14,7 @@ from src.providers.loader import provider
 logger = logging.getLogger("wren-ai-service")
 
 
+# === WREN UI ENGINE - Thực thi và xác thực SQL thông qua GraphQL API của Wren UI (dry_run để validate) ===
 @provider("wren_ui")
 class WrenUI(Engine):
     def __init__(
@@ -139,6 +140,7 @@ class WrenUI(Engine):
             )
 
 
+# === WREN IBIS ENGINE - Thực thi SQL thông qua Wren Ibis connector, hỗ trợ nhiều data source ===
 @provider("wren_ibis")
 class WrenIbis(Engine):
     def __init__(

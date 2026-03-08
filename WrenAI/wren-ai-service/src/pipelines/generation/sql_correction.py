@@ -136,6 +136,7 @@ async def post_process(
 ## End of Pipeline
 
 
+# === PIPELINE SỬA SQL - Khi SQL sinh ra lỗi, pipeline này nhận error message và gọi LLM để sửa chữa ===
 class SQLCorrection(BasicPipeline):
     def __init__(
         self,

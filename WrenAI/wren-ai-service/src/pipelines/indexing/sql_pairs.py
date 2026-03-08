@@ -25,6 +25,7 @@ class SqlPair(BaseModel):
     question: str = ""
 
 
+# === BỘ CHUYỂN ĐỔI SQL PAIRS - Chuyển cặp câu hỏi-SQL thành Document, chunking theo từng câu hỏi riêng lẻ (sentence-level) ===
 @component
 class SqlPairsConverter:
     @component.output_types(documents=List[Document])
@@ -163,6 +164,7 @@ def _load_sql_pairs(sql_pairs_path: str) -> Dict[str, Any]:
         return {}
 
 
+# === PIPELINE INDEXING SQL PAIRS - Luồng lưu trữ tri thức nghiệp vụ (câu hỏi + SQL đã tinh chỉnh) vào Vector DB ===
 class SqlPairs(BasicPipeline):
     def __init__(
         self,

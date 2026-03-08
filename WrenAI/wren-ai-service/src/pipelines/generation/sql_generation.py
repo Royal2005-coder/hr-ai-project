@@ -82,6 +82,7 @@ Let's think step by step.
 
 
 ## Start of Pipeline
+# === XÂY DỰNG PROMPT - Ghép câu hỏi + DATABASE SCHEMA + SQL SAMPLES + INSTRUCTIONS thành prompt template cho LLM ===
 @observe(capture_input=False)
 def prompt(
     query: str,
@@ -120,6 +121,7 @@ def prompt(
     return {"prompt": clean_up_new_lines(_prompt.get("prompt"))}
 
 
+# === GỌI LLM SINH SQL - Gửi prompt đã ghép tới LLM (OpenAI/Gemini) để sinh câu lệnh SQL ===
 @observe(as_type="generation", capture_input=False)
 @trace_cost
 async def generate_sql(
@@ -134,6 +136,7 @@ async def generate_sql(
     ), generator_name
 
 
+# === HẬU XỬ LÝ & XÁC THỰC - Làm sạch SQL output, gửi tới Wren Engine để validate (dry_run) ===
 @observe(capture_input=False)
 async def post_process(
     generate_sql: dict,
@@ -157,6 +160,7 @@ async def post_process(
 ## End of Pipeline
 
 
+# === PIPELINE SINH SQL - Orchestrate toàn bộ: Xây prompt → Gọi LLM → Hậu xử lý → Validate SQL ===
 class SQLGeneration(BasicPipeline):
     def __init__(
         self,

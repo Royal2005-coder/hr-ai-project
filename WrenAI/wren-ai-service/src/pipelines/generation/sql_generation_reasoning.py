@@ -96,6 +96,7 @@ def post_process(
 ## End of Pipeline
 
 
+# === PIPELINE SUY LUẬN (CHAIN OF THOUGHT) - LLM lập kế hoạch suy luận từng bước trước khi sinh SQL ===
 class SQLGenerationReasoning(BasicPipeline):
     def __init__(
         self,

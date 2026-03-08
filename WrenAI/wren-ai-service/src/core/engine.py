@@ -14,6 +14,7 @@ class EngineConfig(BaseModel):
     config: dict = {}
 
 
+# === ENGINE TRỪU TƯỢNG - Định nghĩa giao diện thực thi và xác thực (validate) câu SQL trên Wren Engine ===
 class Engine(metaclass=ABCMeta):
     @abstractmethod
     async def execute_sql(
@@ -26,6 +27,7 @@ class Engine(metaclass=ABCMeta):
         ...
 
 
+# === HÀM LÀM SẠCH KẾT QUẢ - Loại bỏ markdown (```sql), ký tự thừa từ output LLM để lấy SQL thuần túy ===
 def clean_generation_result(result: str) -> str:
     def _normalize_whitespace(s: str) -> str:
         return re.sub(r"\s+", " ", s).strip()

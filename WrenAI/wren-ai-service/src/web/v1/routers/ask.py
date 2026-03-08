@@ -22,6 +22,7 @@ from src.web.v1.services.ask import (
 router = APIRouter()
 
 
+# === ENDPOINT CHÍNH - Điểm tiếp nhận câu hỏi từ UI, khởi tạo query_id và chạy pipeline xử lý nền ===
 @router.post("/asks")
 async def ask(
     ask_request: AskRequest,
