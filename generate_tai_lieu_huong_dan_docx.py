@@ -191,7 +191,7 @@ def create_pccv_doc():
         ('Embedder', 'gemini-embedding-001 (768 dimensions)'),
         ('LLM Provider', 'LiteLLM (abstraction layer)'),
         ('Indexing', '29 AI pipelines (19 generation, 6 indexing, 4 retrieval)'),
-        ('API Key', 'AIzaSyDVw0VwiGkFc3kdbIeIOs_4qICd_Y9rSm4 (từ Google Cloud)')
+        ('API Key', 'Tu nhap GEMINI_API_KEY trong file .env local (khong commit)')
     ]
     
     for label, value in config_items:

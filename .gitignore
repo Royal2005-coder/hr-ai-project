@@ -1,6 +1,8 @@
 # Environment files (chua API keys va secrets)
 .env
 *.env.local
+WrenAI/docker/.env
+WrenAI/**/.env
 
 # Google Cloud credentials
 application_default_credentials.json
@@ -56,6 +58,8 @@ build/
 # Temporary files
 *.tmp
 *.temp
+temp_*
+~$*
 
 # Script tao DOCX (khong can commit)
 generate_docx.py
