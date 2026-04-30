@@ -406,8 +406,8 @@ def create_document():
 
     doc.add_heading("2.1. Thành viên dự án", level=2)
     doc.add_paragraph(
-        "Các thành viên đã được cấp quyền Developer trên GitLab. "
-        "API key Gemini đã được nhúng sẵn trong dự án — không cần cấu hình thêm."
+        "Dự án là Open Source. Để chạy dự án này, mỗi người "
+        "tự trang bị một Gemini API Key và đưa vào file cấu hình."
     )
 
     member_rows = []
@@ -429,11 +429,10 @@ def create_document():
     add_error_box(doc, "Không được phép: xóa branch main, xóa repository, thay đổi cài đặt dự án.")
     add_error_box(doc, "Không được phép: xóa code hoặc file của người khác trên branch main.")
 
-    doc.add_heading("2.3. Gemini API — đã nhúng sẵn trong dự án", level=2)
+    doc.add_heading("2.3. Gemini API — Cần tự cấu hình", level=2)
     doc.add_paragraph(
-        "Hệ thống sử dụng Google Gemini API (qua Google AI Studio) với API key được nhúng sẵn "
-        "trong file .env của dự án. Thành viên chỉ cần pull code về và chạy docker compose up -d "
-        "là hệ thống hoạt động ngay, không cần cấu hình API key riêng."
+        "Hệ thống sử dụng Google Gemini API (qua Google AI Studio). Mỗi cá nhân cần tự lấy "
+        "API key từ Google AI Studio và cấu hình vào file .env trước khi chạy lệnh docker compose up -d."
     )
     add_table(doc,
         ["Thành phần AI", "Model", "Mô tả"],
@@ -443,7 +442,7 @@ def create_document():
         ],
         col_widths=[4, 5, 7]
     )
-    add_important_box(doc, "API key dùng chung cho cả team, đã được nhúng trong file .env. Không cần cài Google Cloud SDK hay gcloud.")
+    add_important_box(doc, "Lưu ý: Bạn phải sao chép nội dung từ .env.example sang file mới có tên .env và điền API key cá nhân vào biến GEMINI_API_KEY.")
 
     doc.add_page_break()
 
@@ -583,25 +582,25 @@ def create_document():
     doc.add_heading("6. Cấu hình môi trường (.env)", level=1)
 
     doc.add_paragraph(
-        "Hệ thống sử dụng Google Gemini API với API key đã được nhúng sẵn trong file .env. "
-        "Thành viên chỉ cần pull code về là có thể chạy ngay — không cần cài Google Cloud SDK, "
-        "không cần tạo API key riêng, không cần đăng nhập gcloud."
+        "Hệ thống sử dụng Google Gemini API. Bạn cần copy file .env.example thành .env "
+        "và điền API key cá nhân (lấy từ Google AI Studio) vào biến GEMINI_API_KEY. "
+        "Tuyệt đối không commit file .env lên public repository."
     )
-    add_important_box(doc, "API key dùng chung cho cả team. Dự án là GitLab private repo — chỉ thành viên được mời mới truy cập được.")
+    add_important_box(doc, "API key là tài sản cá nhân. Dự án là Open Source public repo — mọi file bạn commit đều được hiển thị công khai.")
 
-    doc.add_heading("6.1. File .env đã có sẵn trong dự án", level=2)
+    doc.add_heading("6.1. Tạo file .env từ file mẫu", level=2)
     doc.add_paragraph(
-        "Khi pull code từ GitLab, file .env đã được bao gồm sẵn với đầy đủ cấu hình. "
-        "Bạn chỉ cần kiểm tra file tồn tại:"
+        "Khi pull code từ GitHub, bạn sẽ thấy file mẫu tên là .env.example. "
+        "Hãy sao chép file này thành file .env và cập nhật thông tin:"
     )
-    add_code_block(doc, 'cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker\n\n# Kiểm tra file .env đã có\nTest-Path .env\n# Kết quả mong đợi: True')
+    add_code_block(doc, 'cd C:\\Users\\<TenUser>\\hr-ai-project\\WrenAI\\docker\n\n# Tạo file .env\nCopy-Item .env.example -Destination .env\n# Sau đó mở file .env bằng trình soạn thảo và điền GEMINI_API_KEY')
 
     doc.add_heading("6.2. Nội dung quan trọng trong .env", level=2)
     doc.add_paragraph("File .env chứa các biến cấu hình sau (đã được thiết lập sẵn):")
     add_table(doc,
         ["Biến", "Giá trị", "Mô tả"],
         [
-            ["GEMINI_API_KEY", "(đã nhúng sẵn)", "API key Google Gemini — dùng chung cho team"],
+            ["GEMINI_API_KEY", "(nhập key của bạn)", "API key cá nhân của bạn"],
             ["GENERATION_MODEL", "gemini/gemini-2.5-flash", "Model LLM sử dụng"],
             ["COMPOSE_PROJECT_NAME", "wrenai", "Tên Docker project"],
             ["SHOULD_FORCE_DEPLOY", "1", "Tự động deploy model khi khởi động"],
@@ -609,7 +608,7 @@ def create_document():
         ],
         col_widths=[4, 5, 7]
     )
-    add_warning_box(doc, "Không thay đổi GEMINI_API_KEY trong file .env trừ khi được hướng dẫn bởi Lead.")
+    add_warning_box(doc, "Tuyệt đối không để lộ GEMINI_API_KEY bằng cách commit file .env lên public repo.")
 
     doc.add_heading("6.3. Cấu hình AI models (config.yaml)", level=2)
     doc.add_paragraph("File config.yaml cũng đã có sẵn, cấu hình 2 model AI:")
@@ -880,8 +879,8 @@ def create_document():
     add_table(doc,
         ["File", "Mức độ", "Mô tả"],
         [
-            ["WrenAI/docker/.env", "Cấu hình", "Chứa GEMINI_API_KEY — đã commit trong private repo"],
-            ["WrenAI/docker/.env.example", "Tham khảo", "Mẫu file .env với API key nhúng sẵn"],
+            ["WrenAI/docker/.env", "Cấu hình", "Chứa GEMINI_API_KEY — tuyệt đối không commit file này"],
+            ["WrenAI/docker/.env.example", "Tham khảo", "Mẫu file .env để copy ra file thực tế"],
             ["WrenAI/docker/docker-compose.yaml", "Cấu hình", "Định nghĩa 6 Docker services"],
             ["WrenAI/docker/config.yaml", "Cấu hình", "Model AI (Gemini 2.5 Flash), embedder (Gemini Embedding 001), pipelines"],
             ["TAI_LIEU_DU_AN_HR_ANALYTICS.md", "Tài liệu", "Mô tả kỹ thuật chi tiết dự án"],
@@ -989,13 +988,13 @@ def create_document():
         '# Revoke key ngay trên Google AI Studio và tạo key mới'
     )
 
-    doc.add_heading("13.4. Bảo vệ API key", level=2)
+    doc.add_heading("13.4. Bảo vệ API key cá nhân", level=2)
     doc.add_paragraph(
-        "API key Gemini dùng chung cho team, được quản lý bởi Lead/Maintainer. "
-        "Không chia sẻ API key ra ngoài nhóm dự án, không post lên forum/chat công khai."
+        "Bạn chịu trách nhiệm bảo quản API key cá nhân của mình. "
+        "Không chia sẻ API key cho ai khác, không post lên forum/chat công khai."
     )
-    add_error_box(doc, "KHÔNG chia sẻ GEMINI_API_KEY ra ngoài nhóm dự án. Repo là private nhưng API key không nên bị lộ ra public.")
-    add_important_box(doc, "Nếu API key bị lộ: báo ngay cho Lead để revoke và tạo key mới trên Google AI Studio.")
+    add_error_box(doc, "KHÔNG chia sẻ GEMINI_API_KEY và tuyệt đối không push file .env lên public repo.")
+    add_important_box(doc, "Nếu API key bị lộ: truy cập ngay Google AI Studio để revoke key cũ và tạo key mới.")
 
     doc.add_page_break()
 
